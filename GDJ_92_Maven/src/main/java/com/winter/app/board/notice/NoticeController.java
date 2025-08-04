@@ -22,7 +22,7 @@ public class NoticeController {
 	
 	@GetMapping("list")
 	public String list(Model model)throws Exception{
-		//
+
 		List<BoardVO> list = noticeService.list();
 		
 		model.addAttribute("list", list);
