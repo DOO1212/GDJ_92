@@ -9,4 +9,6 @@ public interface ProductDAO {
 
 	public List<ProductVO> list() throws Exception;
 	
+	public ProductVO detail(ProductVO productVO) throws Exception;
+	
 }

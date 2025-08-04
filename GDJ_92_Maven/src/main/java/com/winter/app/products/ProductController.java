@@ -12,43 +12,41 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequestMapping("products/*")
 public class ProductController {
-	
+
 	@Autowired
 	private ProductService productService;
-	
+
 	@GetMapping("list")
-	public String list(Model model) throws Exception {
-		List<ProductVO> list = productService.list();
-		model.addAttribute("list", list);
-		return "products/list";
-		
+	public void list(Model model) throws Exception {
+		model.addAttribute("list", productService.list());
 	}
-	
-//	@GetMapping("detail")
-//	public String detail() throws Exception {
-//		
-//	}
-	
-//	@GetMapping("add")
-//	public String add() throws Exception {
-//		
-//	}
-	
+
+	@GetMapping("detail")
+	public void detail(Model model, ProductVO productVO) throws Exception {
+		model.addAttribute("vo", productService.detail(productVO));
+
+	}
+
+	@GetMapping("add")
+	public String add() throws Exception {
+		return "products/product_form";
+	}
+
 //	@PostMapping("add")
 //	public String add() throws Exception {
-//		return "products/product_form"
+
 //	}
-	
-//	@GetMapping("update")
-//	public String update() throws Exception {
-//		
-//	}
-	
+
+	@GetMapping("update")
+	public String update() throws Exception {
+		return "products/product_form";
+	}
+
 //	@PostMapping("update")
 //	public String update() throws Exception {
 //		
 //	}
-	
+
 //	@PostMapping("delete")
 //	public String delete() throws Exception {
 //		

@@ -14,5 +14,9 @@ public class ProductService {
 	public List<ProductVO> list() throws Exception {
 		return productDAO.list();
 	}
+	
+	public ProductVO detail(ProductVO productVO) throws Exception {
+		return productDAO.detail(productVO);
+	}
 
 }
