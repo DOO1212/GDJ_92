@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- namespace의 이름은 사용하려는 DAO의 풀패키지명과 동일하게 작성 -->
+<mapper namespace="com.winter.app.board.qna.QnaDAO">
+
+	<!-- ID는 DAO의 메서드명과 동일하게 작성 -->
+	<select id="list" resultType="QnaVO">
+		SELECT *
+		FROM QNA
+		ORDER BY BOARD_REF DESC, BOARD_STEP ASC
+	</select>
+
+
+</mapper>
+  
