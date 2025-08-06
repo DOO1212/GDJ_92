@@ -3,9 +3,11 @@ package com.winter.app.board.notice;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -20,14 +22,22 @@ public class NoticeController {
 	@Autowired
 	private NoticeService noticeService;
 	
+	@Value("${board.notice}")
+	private String name;
+	
+	@ModelAttribute("board")
+	public String getBoard() {
+		return name;
+	}
+	
 	@GetMapping("list")
 	public String list(Model model)throws Exception{
-
+		//
 		List<BoardVO> list = noticeService.list();
 		
 		model.addAttribute("list", list);
 		
-		return "notice/list";
+		return "board/list";
 	}
 	
 	@GetMapping("detail")
@@ -41,13 +51,13 @@ public class NoticeController {
 		
 		model.addAttribute("vo", boardVO);
 		
-		return "notice/detail";
+		return "board/detail";
 	}
 	
 	@GetMapping("add")
 	public String insert()throws Exception{
 		
-		return "notice/add";
+		return "board/add";
 	}
 	
 	@PostMapping("add")
@@ -61,7 +71,7 @@ public class NoticeController {
 		BoardVO boardVO = noticeService.detail(noticeVO);
 		model.addAttribute("vo", boardVO);
 		
-		return "notice/add";
+		return "board/add";
 	}
 	
 	@PostMapping("update")
@@ -83,16 +93,21 @@ public class NoticeController {
 	}
 	
 	@PostMapping("delete")
-	public String delete(BoardVO noticeVO, Model model) throws Exception {
+	public String delete(NoticeVO noticeVO, Model model)throws Exception{
 		int result = noticeService.delete(noticeVO);
-		
 		String msg = "삭제 실패";
 		
-		if (result>0) {
-			msg ="삭제 성공";
+		if(result>0) {
+			msg="삭제 성공";
 		}
 		
-		return "notice/list";
+		String url="./list";
+		
+		model.addAttribute("msg", msg);
+		model.addAttribute("url", url);
+		
+		return "commons/result";
+		
 	}
 	
 	

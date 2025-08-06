@@ -17,7 +17,7 @@
 			<div id="content">
 				<c:import url="/WEB-INF/views/include/topbar.jsp"></c:import>
 				<div class="container-fluid">
-					<h1>Detail page</h1>
+					<h1>${board} Detail page</h1>
 					<h3>${vo.boardTitle}</h3>
 					<h3>${vo.boardContents}</h3>
 					
@@ -28,7 +28,10 @@
 						
 						<button class="btn btn-outline-success action" data-kind="u">Update</button>
 						<button class="btn btn-outline-danger action" data-kind="d">Delete</button>
+						
+						<c:if test="${board ne 'notice'}">
 						<button class="btn btn-outline-primary action" data-kind="r">Reply</button>
+						</c:if>
 					</div>
 				</div>
 			</div>

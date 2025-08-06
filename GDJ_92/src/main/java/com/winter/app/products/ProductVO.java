@@ -19,9 +19,8 @@ public class ProductVO {
 	private Double productRate;
 	private Long kindNum;
 	
-	// 1:1
-	// 단방향
+	//1:1 
+	//단방향
 	private ProductKindVO productKindVO;
-	
 
 }

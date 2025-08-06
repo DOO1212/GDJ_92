@@ -6,16 +6,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-@Getter
 @Setter
+@Getter
 @ToString
 public class ProductKindVO {
 	
 	private Long kindNum;
 	private String kindName;
 	
-	// 1:N
-	// 양방향
-	private List<ProductVO> list;
+	//1:N
+	//private List<ProductVO> list;
 
 }
