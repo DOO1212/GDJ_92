@@ -9,5 +9,7 @@ public interface BoardDAO {
 	public BoardVO detail(BoardVO boardVO) throws Exception;
 	
 	public int insert(BoardVO boardVO) throws Exception;
+	
+	public int update(BoardVO boardVO) throws Exception;
 
 }
