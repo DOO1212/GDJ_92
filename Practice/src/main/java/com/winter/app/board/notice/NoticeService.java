@@ -19,7 +19,19 @@ public class NoticeService implements BoardService {
 		// TODO Auto-generated method stub
 		return noticeDAO.list();
 	}
-	
 
+	@Override
+	public BoardVO detail(BoardVO boardVO) throws Exception {
+		// TODO Auto-generated method stub
+		return noticeDAO.detail(boardVO);
+	}
+
+	@Override
+	public int insert(BoardVO boardVO) throws Exception {
+		// TODO Auto-generated method stub
+		return noticeDAO.insert(boardVO);
+	}
+	
+	
 
 }

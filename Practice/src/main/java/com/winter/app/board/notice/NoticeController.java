@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.winter.app.board.BoardVO;
@@ -27,5 +28,33 @@ public class NoticeController {
 		return "notice/list";
 		
 	}
+	
+	@GetMapping("detail")
+	public String detail(NoticeVO noticeVO, Model model) throws Exception {
+		
+		BoardVO boardVO = noticeService.detail(noticeVO);
+		
+		model.addAttribute("vo", boardVO);
+		
+		return "notice/detail";
+	}
+	
+	@GetMapping("add")
+	public String insert() throws Exception {
+		
+		return "notice/add";
+	}
+	
+	@PostMapping("add")
+	public String insert(NoticeVO noticeVO, Model model) throws Exception {
+		
+		int result = noticeService.insert(noticeVO);
+		
+		return "redirect:./list";
+	}
+	
+	
+	
+	
 
 }
