@@ -11,8 +11,12 @@ import com.winter.app.board.BoardVO;
 @Service
 public class NoticeService implements BoardService {
 	
-	@Autowired
-	private NoticeDAO noticeDAO;
+	private final NoticeDAO noticeDAO;
+	
+	public NoticeService(NoticeDAO noticeDAO) {
+		// TODO Auto-generated constructor stub
+		this.noticeDAO = noticeDAO;
+	}
 
 	@Override
 	public List<BoardVO> list() throws Exception {
@@ -36,6 +40,12 @@ public class NoticeService implements BoardService {
 	public int update(BoardVO boardVO) throws Exception {
 		// TODO Auto-generated method stub
 		return noticeDAO.update(boardVO);
+	}
+
+	@Override
+	public int delete(BoardVO boardVO) throws Exception {
+		// TODO Auto-generated method stub
+		return noticeDAO.delete(boardVO);
 	}
 	
 	

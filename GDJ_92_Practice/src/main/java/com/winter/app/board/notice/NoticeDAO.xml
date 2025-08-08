@@ -35,7 +35,9 @@
 		BOARD_NUM=#{boardNum}
 	</update>
 
-
+	<delete id="delete" parameterType="NoticeVO">
+		DELETE FROM NOTICE WHERE BOARD_NUM=#{boardNum}
+	</delete>
 
 
 
