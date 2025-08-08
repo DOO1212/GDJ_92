@@ -63,6 +63,25 @@ public class NoticeController {
 		return "notice/add";
 	}
 	
+	@PostMapping("update")
+	public String update(NoticeVO noticeVO, Model model) throws Exception {
+		
+		int result = noticeService.update(noticeVO);
+		
+		String msg = "수정 실패";
+		
+		if (result>0) {
+			msg = "수정 성공";
+		}
+		
+		String url = "./detail?boardNum="+noticeVO.getBoardNum();
+		
+		model.addAttribute("msg", msg);
+		model.addAttribute("url", url);
+		
+		return "commons/result";
+	}
+	
 	
 	
 	
