@@ -1,4 +1,4 @@
-package com.winter.app.board.products;
+package com.winter.app.products;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

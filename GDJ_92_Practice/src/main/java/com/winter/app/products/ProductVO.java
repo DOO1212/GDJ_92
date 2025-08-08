@@ -1,10 +1,14 @@
-package com.winter.app.board.products;
+package com.winter.app.products;
 
 import java.time.LocalDate;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Getter
+@Setter
+@ToString
 public class ProductVO {
 	
 	private Long productNum;
@@ -13,5 +17,9 @@ public class ProductVO {
 	private LocalDate productDate;
 	private Double productRate;
 	private Long kindNum;
+	
+	//1:1 
+	//단방향
+	private ProductKindVO productKindVO;
 
 }
