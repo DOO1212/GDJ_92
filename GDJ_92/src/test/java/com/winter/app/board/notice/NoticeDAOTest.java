@@ -20,12 +20,12 @@ class NoticeDAOTest {
 	private NoticeDAO noticeDAO;
 	
 	//@Test
-	void listTest()throws Exception{
-		List<BoardVO> list = noticeDAO.list();
-		
-		assertNotEquals(0, list);
-				
-	}
+//	void listTest()throws Exception{
+//		List<BoardVO> list = noticeDAO.list();
+//		
+//		assertNotEquals(0, list);
+//				
+//	}
 	
 	//@Test
 	void detailTest()throws Exception{

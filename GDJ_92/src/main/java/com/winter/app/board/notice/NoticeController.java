@@ -10,13 +10,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.winter.app.board.BoardFileVO;
 import com.winter.app.board.BoardVO;
+import com.winter.app.commons.Pager;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 @Controller
 @RequestMapping(value="/notice/*")
+@Slf4j
 public class NoticeController {
 
 	@Autowired
@@ -31,9 +37,11 @@ public class NoticeController {
 	}
 	
 	@GetMapping("list")
-	public String list(Model model)throws Exception{
+	public String list(@ModelAttribute Pager pager, Model model)throws Exception{
 		//
-		List<BoardVO> list = noticeService.list();
+		
+		List<BoardVO> list = noticeService.list(pager);
+		
 		
 		model.addAttribute("list", list);
 		
@@ -61,8 +69,9 @@ public class NoticeController {
 	}
 	
 	@PostMapping("add")
-	public String insert(NoticeVO noticeVO)throws Exception{
-		int result = noticeService.insert(noticeVO);
+	public String insert(NoticeVO noticeVO, MultipartFile [] attaches)throws Exception{
+	
+		int result = noticeService.insert(noticeVO, attaches);
 		return "redirect:./list";
 	}
 	
@@ -75,8 +84,8 @@ public class NoticeController {
 	}
 	
 	@PostMapping("update")
-	public String update(NoticeVO noticeVO, Model model)throws Exception{
-		int result = noticeService.update(noticeVO);
+	public String update(NoticeVO noticeVO,MultipartFile [] attaches, Model model)throws Exception{
+		int result = noticeService.update(noticeVO, attaches);
 		
 		String msg = "수정 실패";
 		
@@ -108,6 +117,21 @@ public class NoticeController {
 		
 		return "commons/result";
 		
+	}
+	
+	@PostMapping("fileDelete")
+	@ResponseBody
+	public int fileDelete(BoardFileVO boardFileVO, Model model)throws Exception{
+		int result = noticeService.fileDelete(boardFileVO);
+		
+		return result;
+	}
+	
+	@GetMapping("fileDown")
+	public String fileDown(BoardFileVO boardFileVO, Model model)throws Exception{
+		boardFileVO = noticeService.fileDetail(boardFileVO);
+		model.addAttribute("vo", boardFileVO);
+		return "fileDownView";
 	}
 	
 	

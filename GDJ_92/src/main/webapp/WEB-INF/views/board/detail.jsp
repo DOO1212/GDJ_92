@@ -22,6 +22,14 @@
 					<h3>${vo.boardContents}</h3>
 					
 					<div>
+						<h2>첨부파일</h2>
+						<c:forEach items="${vo.boardFileVOs}" var="f">
+						<h4><a href="./fileDown?fileNum=${f.fileNum}">${f.oriName}</a></h4>
+						<h4>${f.saveName}</h4>
+						</c:forEach>
+					</div>
+					
+					<div>
 						<form id="frm">
 							<input type="hidden" name="boardNum" value="${vo.boardNum}">
 						</form>

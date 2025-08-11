@@ -1,8 +1,12 @@
 package com.winter.app.commons;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
-@Data
+@Setter
+@Getter
+@ToString
 public class FileVO {
 	
 	private Long fileNum;
