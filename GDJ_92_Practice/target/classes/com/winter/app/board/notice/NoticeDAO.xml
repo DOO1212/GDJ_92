@@ -1,29 +1,103 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 이 문서가 MyBatis Mapper 3.0 규격을 따르는 XML 파일임을 선언합니다. -->
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<!-- namespace의 이름은 사용하려는 DAO의 풀패키지명과 동일하게 작성 -->
+<!-- namespace: 이 Mapper XML이 어떤 DAO 인터페이스와 연결될지 지정합니다. -->
+<!-- 반드시 DAO의 전체 경로와 일치해야 합니다. -->
 <mapper namespace="com.winter.app.board.notice.NoticeDAO">
-	<!-- ID는 DAO의 메서드명과 동일하게 작성 -->
 
-	<select id="list" resultType="NoticeVO">
-		SELECT * FROM NOTICE ORDER BY
-		BOARD_NUM DESC
+	<!-- <resultMap>: DB 조회 결과를 Java 객체(VO)에 매핑하는 규칙을 상세하게 정의합니다. -->
+	<!-- type="NoticeVO": 결과를 NoticeVO 객체에 담을 것입니다. -->
+	<!-- id="detailResult": 이 규칙의 고유한 이름입니다. -->
+	<resultMap type="NoticeVO" id="detailResult">
+		<!-- <id>: Primary Key 컬럼을 매핑합니다. -->
+		<id column="BOARD_NUM" property="boardNum" />
+		<!-- <result>: 일반 컬럼들을 매핑합니다. -->
+		<result column="BOARD_TITLE" property="boardTitle" />
+		<result column="BOARD_WRITER" property="boardWriter" />
+		<result column="BOARD_CONTENTS" property="boardContents" />
+		<result column="BOARD_DATE" property="boardDate" />
+		<result column="BOARD_HIT" property="boardHit" />
+		<!-- <collection>: 1:N 관계(게시글 1개 : 첨부파일 N개)를 매핑합니다. -->
+		<!-- property="boardFileVOs": NoticeVO 안에 있는 List<BoardFileVO> 타입의 필드 이름입니다. -->
+		<!-- ofType="BoardFileVO": 이 List에 담길 객체의 타입입니다. -->
+		<collection property="boardFileVOs"
+			javaType="java.util.List" ofType="BoardFileVO">
+			<id column="FILE_NUM" property="fileNum" />
+			<result column="ORI_NAME" property="oriName" />
+			<result column="SAVE_NAME" property="saveName" />
+		</collection>
+	</resultMap>
+
+	<!-- <sql>: 재사용할 수 있는 SQL 조각을 정의합니다. id는 이 조각의 이름입니다. -->
+	<sql id="search">
+		<!-- <where>: 내부 조건이 하나라도 있으면 자동으로 WHERE 키워드를 붙여줍니다. -->
+		<where>
+			<!-- <choose>: Java의 switch-case 문과 비슷합니다. -->
+			<choose>
+				<!-- Pager 객체의 kind 필드 값이 'k1'이면 BOARD_TITLE을 검색합니다. -->
+				<when test="kind=='k1'">
+					BOARD_TITLE
+				</when>
+				<!-- kind 필드 값이 'k2'이면 BOARD_CONTENTS를 검색합니다. -->
+				<when test="kind=='k2'">
+					BOARD_CONTENTS
+				</when>
+				<!-- 그 외의 경우(k3)는 BOARD_WRITER를 검색합니다. -->
+				<otherwise>
+					BOARD_WRITER
+				</otherwise>
+			</choose>
+			<!-- Pager 객체의 keyword 필드 값으로 LIKE 검색을 수행합니다. -->
+			LIKE CONCAT('%',#{keyword}, '%')
+		</where>
+	</sql>
+
+	<!-- id="list": NoticeDAO의 list 메서드와 연결됩니다. -->
+	<!-- resultType="NoticeVO": 조회된 각 행을 NoticeVO 객체에 담아 반환합니다. -->
+	<select id="list" resultType="NoticeVO" parameterType="Pager">
+		SELECT * FROM NOTICE
+		<!-- <include>: 위에서 정의한 'search' SQL 조각을 여기에 삽입합니다. -->
+		<include refid="search"></include>
+		ORDER BY BOARD_NUM DESC
+		limit #{startIndex}, #{perPage} <!-- MariaDB/MySQL의 페이징 문법 -->
 	</select>
 
+	<!-- id="totalCount": NoticeDAO의 totalCount 메서드와 연결됩니다. -->
+	<select id="totalCount" resultType="Long" parameterType="Pager">
+		SELECT COUNT(BOARD_NUM) FROM NOTICE
+		<include refid="search"></include>
+	</select>
+
+	<!-- id="detail": NoticeDAO의 detail 메서드와 연결됩니다. -->
+	<!-- resultMap="detailResult": 조회 결과를 위에서 정의한 'detailResult' 규칙에 따라 매핑합니다. -->
 	<select id="detail" parameterType="NoticeVO"
-		resultType="NoticeVO">
-		SELECT * FROM NOTICE WHERE BOARD_NUM=#{boardNum}
+		resultMap="detailResult">
+		SELECT * FROM
+		NOTICE N
+		LEFT JOIN <!-- 게시글에 파일이 없어도 게시글은 나와야 하므로 LEFT JOIN 사용 -->
+		NOTICEFILES F
+		USING(board_num) <!-- 두 테이블의 조인 조건 컬럼명이 같을 때 사용 -->
+		WHERE N.BOARD_NUM=#{boardNum}
 	</select>
 
-	<insert id="insert" parameterType="NoticeVO">
+	<!-- id="insert": NoticeDAO의 insert 메서드와 연결됩니다. -->
+	<!-- useGeneratedKeys="true": DB가 자동으로 생성한 키(Auto Increment 값)를 사용하겠다고 설정합니다. -->
+	<!-- keyProperty="boardNum": 생성된 키 값을 파라미터로 받은 NoticeVO 객체의 'boardNum' 필드에 
+		담아줍니다. -->
+	<insert id="insert" parameterType="NoticeVO"
+		useGeneratedKeys="true" keyProperty="boardNum">
 		INSERT INTO NOTICE
-		(BOARD_NUM,
-		BOARD_TITLE, BOARD_CONTENTS, BOARD_WRITER, BOARD_DATE, BOARD_HIT)
+		(BOARD_NUM, BOARD_TITLE, BOARD_CONTENTS, BOARD_WRITER, BOARD_DATE, BOARD_HIT)
 		VALUES
-		(NULL, #{boardTitle}, #{boardContents}, #{boardWriter}, now(),
-		0)
+		(NULL, #{boardTitle}, #{boardContents}, #{boardWriter}, now(), 0)
+	</insert>
+
+	<insert id="insertFile" parameterType="BoardFileVO">
+		INSERT INTO NOTICEFILES
+		VALUES(NULL, #{oriName}, #{saveName}, #{boardNum})
 	</insert>
 
 	<update id="update" parameterType="NoticeVO">
@@ -39,11 +113,16 @@
 		DELETE FROM NOTICE WHERE BOARD_NUM=#{boardNum}
 	</delete>
 
+	<delete id="fileDelete" parameterType="NoticeVO">
+		DELETE FROM NOTICEFILES WHERE BOARD_NUM=#{boardNum}
+	</delete>
 
+	<select id="fileDetail" parameterType="BoardFileVO"
+		resultType="BoardFileVO">
+		SELECT * FROM NOTICEFILES WHERE FILE_NUM=#{fileNum}
+	</select>
 
-
-
-
-
+	<delete id="fileDeleteOne" parameterType="BoardFileVO">
+		DELETE FROM NOTICEFILES WHERE FILE_NUM=#{fileNum}
+	</delete>
 </mapper>
-  

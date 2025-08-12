@@ -1,30 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- 이 문서가 MyBatis Mapper 3.0 규격을 따르는 XML 파일임을 선언합니다. -->
 <!DOCTYPE mapper
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
   
-  <!-- namespace의 이름은 사용하려는 DAO의 풀패키지명과 동일하게 작성 -->
-  <mapper namespace="com.winter.app.products.ProductDAO">
-  		<resultMap type="ProductVO" id="detailResult">
-  		<!-- PK Mapping -->
-  			<id column="product_num" property="productNum"/>
-  		<!-- 그외 나머지 -->	
-  			<result column="product_name" property="productName"/>
-  			<result column="product_contents" property="productContents"/>
-  			<result column="product_rate" property="productRate"/>
-  			<result column="product_date" property="productDate"/>
-  			<result column="kind_num" property="kindNum"/>
-  		<!-- 1:1 -->	
-  			<association property="productKindVO" javaType="ProductKindVO">
-  				<id column="kind_num" property="kindNum"/>
-  				<result column="kind_name" property="kindName"/>
-  			</association>
-  		</resultMap>  	
+<!-- namespace: 이 Mapper XML이 com.winter.app.products.ProductDAO 인터페이스와 연결됨을 선언합니다. -->
+<mapper namespace="com.winter.app.products.ProductDAO">
+
+    <!-- <resultMap>: DB 조회 결과를 Java 객체(VO)에 매핑하는 규칙을 정의하는 설명서입니다. -->
+    <resultMap type="ProductVO" id="detailResult">
+        <!-- PK(Primary Key) 컬럼 매핑 -->
+        <id column="product_num" property="productNum"/>
+        <!-- 그 외 나머지 일반 컬럼 매핑 -->	
+        <result column="product_name" property="productName"/>
+        <result column="product_contents" property="productContents"/>
+        <result column="product_rate" property="productRate"/>
+        <result column="product_date" property="productDate"/>
+        <!-- FK(Foreign Key)도 일반 컬럼처럼 매핑합니다. -->
+        <result column="kind_num" property="kindNum"/>
+
+        <!-- <association>: 1:1 관계(하나의 상품 : 하나의 카테고리)를 매핑하는 핵심 태그입니다. -->
+        <!-- property="productKindVO": ProductVO 안에 있는 ProductKindVO 타입의 필드 이름입니다. -->
+        <!-- javaType="ProductKindVO": 이 필드의 Java 타입입니다. -->
+        <association property="productKindVO" javaType="ProductKindVO">
+            <!-- JOIN으로 가져온 ProductKind 테이블의 컬럼들을 ProductKindVO 객체의 필드에 매핑합니다. -->
+            <id column="kind_num" property="kindNum"/>
+            <result column="kind_name" property="kindName"/>
+        </association>
+    </resultMap>
   	
-  		<!-- ID는 DAO의 메서드명과 동일하게 작성 -->
-  		<select id="list" resultType="ProductVO">
-  			SELECT * FROM PRODUCTS ORDER BY PRODUCT_NUM DESC
-  		</select>
- 
-  </mapper>
+  	
+    <!-- id="list": ProductDAO의 list 메서드와 연결됩니다. -->
+    <select id="list" resultType="ProductVO">
+        SELECT * FROM PRODUCTS ORDER BY PRODUCT_NUM DESC
+    </select>
+    
+    <!-- id="detail": ProductDAO의 detail 메서드와 연결됩니다. -->
+    <!-- resultMap="detailResult": 조회 결과를 위에서 정의한 'detailResult' 규칙에 따라 매핑합니다. -->
+    <select id="detail" parameterType="ProductVO" resultMap="detailResult">
+        SELECT *
+        FROM PRODUCTS P
+             <!-- INNER JOIN: 두 테이블에 모두 데이터가 있는 경우만 조회합니다. -->
+             INNER JOIN
+             PRODUCTS_KIND K
+             <!-- USING(KIND_NUM): 두 테이블의 조인 조건 컬럼명(KIND_NUM)이 같을 때 사용하는 간결한 문법입니다. -->
+             USING(KIND_NUM)
+        WHERE P.PRODUCT_NUM=#{productNum}
+    </select>
+    
+    <!-- id="insert": ProductDAO의 insert 메서드와 연결됩니다. -->
+    <insert id="insert" parameterType="ProductVO">
+        INSERT INTO PRODUCTS
+        VALUES (NULL, #{productName}, #{productContents}, #{productDate}, #{productRate}, #{kindNum})
+    </insert>
   
+    <!-- id="update": ProductDAO의 update 메서드와 연결됩니다. -->
+    <update id="update" parameterType="ProductVO">
+        UPDATE products
+        set 
+            PRODUCT_NAME= #{productName}, 
+            PRODUCT_CONTENTS =#{productContents}, 
+            PRODUCT_DATE=#{productDate}, 
+            PRODUCT_RATE=#{productRate}, 
+            KIND_NUM=#{kindNum}
+        WHERE PRODUCT_NUM=#{productNum}	
+    </update>
+    
+    <!-- id="delete": ProductDAO의 delete 메서드와 연결됩니다. -->
+    <delete id="delete" parameterType="ProductVO">
+        DELETE FROM PRODUCTS
+        WHERE PRODUCT_NUM=#{productNum}
+    </delete>  		 	
+  	
+</mapper>
