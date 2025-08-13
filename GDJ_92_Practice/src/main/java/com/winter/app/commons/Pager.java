@@ -3,7 +3,6 @@ package com.winter.app.commons;
 import lombok.Getter;
 import lombok.Setter;
 
-// Lombok 어노테이션: 모든 필드에 대한 getter, setter 메서드를 자동으로 생성합니다.
 @Getter
 @Setter
 public class Pager {

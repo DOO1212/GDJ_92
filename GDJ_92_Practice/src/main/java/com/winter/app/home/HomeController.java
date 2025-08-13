@@ -3,10 +3,9 @@ package com.winter.app.home;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping; // 이 import문이 필요합니다!
 
-// @Controller: 이 클래스가 Spring MVC의 '컨트롤러'임을 선언합니다.
 @Controller
 public class HomeController {
-	
+
 	// @GetMapping("/"): 이 어노테이션이 꼭 필요합니다!
 	// 웹사이트의 가장 기본 주소(예: http://localhost/)로 GET 방식의 요청이 왔을 때
 	// 이 메서드를 실행하라고 알려주는 역할을 합니다.

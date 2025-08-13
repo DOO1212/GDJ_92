@@ -33,8 +33,7 @@ public class FileConfig implements WebMvcConfigurer {
 			// 위에서 지정한 URL 요청이 들어왔을 때, 파일을 어디서 찾아 제공할지를 지정합니다.
 			// "file:/" 접두사는 로컬 파일 시스템(하드디스크)의 경로를 의미합니다.
 			// 최종적으로 "file:/D:/upload/" 경로를 가리키게 됩니다.
-			.addResourceLocations("file:"+path)
-			;
+				.addResourceLocations("file:" + path);
 	}
 
 }

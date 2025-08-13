@@ -8,7 +8,7 @@ import lombok.ToString;
 @Getter
 @ToString
 public class FileVO {
-	
+
 	private Long fileNum;
 	private String oriName;
 	private String saveName;

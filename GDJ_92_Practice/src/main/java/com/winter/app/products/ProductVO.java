@@ -8,7 +8,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-// Lombok 어노테이션: getter, setter, toString 메서드를 자동으로 생성해 줍니다.
 @Getter
 @Setter
 @ToString
