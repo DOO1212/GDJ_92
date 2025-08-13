@@ -1,10 +1,7 @@
-// 이 파일이 com.winter.app.board.qna 패키지에 속해 있다는 선언입니다.
 package com.winter.app.board.qna;
 
-// MyBatis의 @Mapper 어노테이션을 가져옵니다.
 import org.apache.ibatis.annotations.Mapper;
 
-// 공통으로 사용할 BoardDAO와 BoardVO 클래스를 가져옵니다.
 import com.winter.app.board.BoardDAO;
 import com.winter.app.board.BoardVO;
 

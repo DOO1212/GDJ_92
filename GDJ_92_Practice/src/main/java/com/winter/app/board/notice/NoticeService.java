@@ -19,11 +19,9 @@ import com.winter.app.commons.Pager;
 // 즉, BoardService에 정의된 모든 메서드를 반드시 여기서 완성해야 합니다.
 public class NoticeService implements BoardService {
 	
-	// @Autowired: Spring이 관리하는 NoticeDAO 객체를 자동으로 주입(DI)합니다.
 	@Autowired
 	private NoticeDAO noticeDAO;
 	
-	// @Autowired: 파일 저장을 담당하는 FileManager 객체를 자동으로 주입(DI)합니다.
 	@Autowired
 	private FileManager fileManager;
 	
@@ -49,7 +47,6 @@ public class NoticeService implements BoardService {
 	// 게시글 상세 조회 로직
 	@Override
 	public BoardVO detail(BoardVO boardVO) throws Exception {
-		// 특별한 가공 없이 DAO를 통해 바로 데이터를 조회하여 반환합니다.
 		return noticeDAO.detail(boardVO);
 	}
 	

@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NoticeController {
 
-	// @Autowired: Spring이 미리 만들어 둔 NoticeService 객체(Bean)를 여기에 자동으로 주입(DI)해줍니다.
 	@Autowired
 	private NoticeService noticeService;
 

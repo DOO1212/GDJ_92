@@ -1,12 +1,9 @@
 package com.winter.app.board;
 
-// 다른 패키지의 클래스들을 가져와서 사용합니다.
 import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 import com.winter.app.commons.Pager;
 
-// BoardService 라는 이름의 인터페이스를 선언합니다.
-// 게시판과 관련된 비즈니스 로직(실제 서비스 기능)들의 명세를 정의합니다.
 public interface BoardService {
 
 	// 게시글 목록을 가져오는 기능의 명세입니다. (DAO와 유사)

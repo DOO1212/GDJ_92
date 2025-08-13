@@ -16,7 +16,6 @@ public class ProductService {
     // 현재 이 클래스 내에서 사용되고 있지는 않네요.
     private final NoticeService noticeService;
 	
-	// @Autowired: ProductDAO 타입의 Bean을 자동으로 주입(DI)합니다.
 	// 이 DAO를 통해 데이터베이스 관련 작업을 수행합니다.
 	@Autowired
 	private ProductDAO productDAO;

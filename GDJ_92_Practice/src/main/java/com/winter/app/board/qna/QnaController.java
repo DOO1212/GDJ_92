@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class QnaController {
 
-	// @Autowired: Spring이 QnaService 객체를 자동으로 주입(DI)합니다.
 	@Autowired
 	private QnaService qnaService;
 

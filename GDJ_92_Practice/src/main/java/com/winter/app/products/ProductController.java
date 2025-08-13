@@ -15,7 +15,6 @@ import org.springframework.web.servlet.ModelAndView;
 @RequestMapping("/products/*")
 public class ProductController {
 
-	// @Autowired: ProductService 타입의 Bean을 자동으로 주입(DI)합니다.
 	@Autowired
 	private ProductService productService;
 

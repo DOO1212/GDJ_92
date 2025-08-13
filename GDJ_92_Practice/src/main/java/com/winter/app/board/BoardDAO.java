@@ -1,11 +1,8 @@
 package com.winter.app.board;
 
-// 다른 패키지에 있는 List와 Pager 클래스를 가져와서 사용합니다.
 import java.util.List;
 import com.winter.app.commons.Pager;
 
-// BoardDAO 라는 이름의 인터페이스를 선언합니다.
-// 데이터베이스의 'board' 테이블과 관련된 기능들의 명세를 정의합니다.
 public interface BoardDAO {
 
 	// 게시글 목록을 조회하는 기능의 명세입니다.
