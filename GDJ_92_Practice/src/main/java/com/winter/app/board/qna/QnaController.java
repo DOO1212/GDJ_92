@@ -1,139 +1,138 @@
 package com.winter.app.board.qna;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.winter.app.board.BoardFileVO;
 import com.winter.app.board.BoardVO;
-import com.winter.app.board.notice.NoticeVO;
 import com.winter.app.commons.Pager;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Controller
-// @RequestMapping: 이 클래스 내부의 모든 메서드는 "/qna/"로 시작하는 URL 요청을 처리합니다.
+// @RequestMapping: 이 클래스의 모든 메서드에 대한 기본 URL 경로를 "/qna/"로 설정합니다.
 @RequestMapping("/qna/*")
-// @Slf4j: 'log'라는 이름의 로깅 객체를 자동으로 만들어줍니다.
+// @Slf4j: Lombok을 통해 'log'라는 이름의 로깅 객체를 자동으로 생성합니다.
 @Slf4j
 public class QnaController {
 
+	// @Autowired: 스프링이 관리하는 QnaService 타입의 객체를 자동으로 주입(연결)합니다.
 	@Autowired
 	private QnaService qnaService;
 
-	// @Value: application.properties의 'board.qna' 값을 읽어와 name 변수에 저장합니다.
+	// @Value: application.properties 파일에서 'board.qna' 키의 값을 찾아 주입합니다.
 	@Value("${board.qna}")
 	private String name;
 
-	// @ModelAttribute: 이 컨트롤러의 모든 요청 처리 전에 실행되어,
-	// "board"라는 이름으로 "qna" 값을 모든 View(JSP)에 전달합니다.
+	// @ModelAttribute: 이 컨트롤러의 모든 요청 처리 전에 실행되어 Model에 공통 값을 추가합니다.
 	@ModelAttribute("board")
 	public String getBoard() {
-		return name;
+		return name; // 반환된 값("qna")이 "board"라는 이름으로 모든 View에 전달됩니다.
 	}
 
-	// @GetMapping("list"): GET 방식의 "/qna/list" 요청을 처리합니다.
+	// @GetMapping("list"): HTTP GET 방식의 "/qna/list" 요청을 처리합니다.
+	@GetMapping("list")
 	public String list(Pager pager, Model model) throws Exception {
-		// model에 pager와 list 데이터를 담아 View로 전달합니다.
-		model.addAttribute("pager", pager);
-		model.addAttribute("list", qnaService.list(pager));
-		// "board/list.jsp" 뷰를 사용자에게 보여줍니다.
+		// 서비스 레이어를 호출하여 게시물 목록 데이터를 가져옵니다.
+		List<BoardVO> ar = qnaService.list(pager);
+		// model 바구니에 "list"라는 이름으로 조회된 목록 데이터를 담습니다.
+		model.addAttribute("list", ar);
+		// 사용자에게 보여줄 View의 경로를 반환합니다. (e.g., /WEB-INF/views/board/list.jsp)
 		return "board/list";
 	}
 
 	// @GetMapping("detail"): GET 방식의 "/qna/detail" 요청을 처리합니다.
+	@GetMapping("detail")
 	public String detail(QnaVO qnaVO, Model model) throws Exception {
-		model.addAttribute("vo", qnaService.detail(qnaVO));
+		// 요청 파라미터(boardNum)로 게시글의 상세 정보를 조회합니다.
+		BoardVO boardVO = qnaService.detail(qnaVO);
+		// 조회된 상세 정보를 "vo"라는 이름으로 모델에 담습니다.
+		model.addAttribute("vo", boardVO);
+		// 상세 페이지 View를 반환합니다.
 		return "board/detail";
 	}
 
-	// ==========================================================
-	// Q&A 게시판의 핵심 기능: 답글 (Reply)
-	// ==========================================================
+	// @GetMapping("add"): GET 방식의 "/qna/add" 요청을 처리합니다. (원본글 작성)
+	@GetMapping("add")
+	public String add() throws Exception {
+		// 별도 처리 없이 글쓰기 폼(add.jsp) 페이지만을 보여줍니다.
+		return "board/add";
+	}
 
-	// @GetMapping("reply"): GET 방식의 "/qna/reply" 요청을 처리합니다. (답글 작성 폼으로 이동)
+	// @PostMapping("add"): POST 방식의 "/qna/add" 요청을 처리합니다. (원본글 폼 제출)
+	@PostMapping("add")
+	public String add(QnaVO qnaVO, MultipartFile[] attaches) throws Exception {
+		// 폼 데이터(qnaVO)와 첨부파일(attaches)로 DB에 글을 등록합니다.
+		int result = qnaService.insert(qnaVO, attaches);
+		// 처리가 완료되면 목록 페이지로 리다이렉트(redirect) 시킵니다.
+		return "redirect:./list";
+	}
+
+	// @GetMapping("update"): GET 방식의 "/qna/update" 요청을 처리합니다. (수정 페이지 이동)
+	@GetMapping("update")
+	public String update(QnaVO qnaVO, Model model) throws Exception {
+		// 수정할 게시물의 기존 정보를 불러옵니다.
+		BoardVO boardVO = qnaService.detail(qnaVO);
+		// 불러온 정보를 모델에 담아 View로 전달합니다.
+		model.addAttribute("vo", boardVO);
+		// 글쓰기 폼(add.jsp)을 수정 페이지로 재활용합니다.
+		return "board/add";
+	}
+
+	// @PostMapping("update"): POST 방식의 "/qna/update" 요청을 처리합니다. (수정 폼 제출)
+	@PostMapping("update")
+	public String update(QnaVO qnaVO, MultipartFile[] attaches) throws Exception {
+		// 수정된 내용과 파일을 DB에 반영합니다.
+		int result = qnaService.update(qnaVO, attaches);
+		// 수정이 완료되면 해당 글의 상세 페이지로 리다이렉트합니다.
+		return "redirect:./detail?boardNum=" + qnaVO.getBoardNum();
+	}
+
+	// @PostMapping("delete"): POST 방식의 "/qna/delete" 요청을 처리합니다.
+	@PostMapping("delete")
+	public String delete(QnaVO qnaVO) throws Exception {
+		// 해당 게시물을 DB에서 삭제합니다.
+		int result = qnaService.delete(qnaVO);
+		// 삭제 후, 목록 페이지로 리다이렉트합니다.
+		return "redirect:./list";
+	}
+
+	// @GetMapping("reply"): GET 방식의 "/qna/reply" 요청을 처리합니다. (답글 폼으로 이동)
+	@GetMapping("reply")
 	public String reply(QnaVO qnaVO, Model model) throws Exception {
-		// 파라미터로 받은 원본글 정보(qnaVO)를 모델에 담아 View로 전달합니다.
-		// View에서는 이 정보를 이용해 "어떤 글에 대한 답글인지" 표시하거나,
-		// 답글 처리에 필요한 원본글의 번호(boardNum)를 hidden input으로 가지고 있게 됩니다.
+		// 답글을 달 원본글의 정보(boardNum 등)를 View로 전달하기 위해 모델에 담습니다.
 		model.addAttribute("vo", qnaVO);
 		// 글쓰기 폼(add.jsp)을 답글 작성 폼으로 재활용합니다.
 		return "board/add";
 	}
 
 	// @PostMapping("reply"): POST 방식의 "/qna/reply" 요청을 처리합니다. (답글 폼 제출)
-	public String reply(QnaVO qnaVO) throws Exception {
-		// 답글 내용과 원본글 정보가 담긴 qnaVO를 Service로 넘겨 답글 등록 로직을 수행합니다.
-		int result = qnaService.reply(qnaVO);
+	@PostMapping("reply")
+	public String reply(QnaVO qnaVO, MultipartFile[] attaches) throws Exception {
+		// 서비스의 답글 처리 로직을 호출합니다. (원본글 정보와 답글 내용 포함)
+		int result = qnaService.reply(qnaVO, attaches);
 		// 답글 등록 후, 목록 페이지로 리다이렉트합니다.
 		return "redirect:./list";
 	}
 
-	// ----------------------------------------------------------
-	// 이하 공지사항(Notice)과 유사한 기본 CRUD 기능들
-	// ----------------------------------------------------------
-
-	// @GetMapping("add"): 원본글 작성 폼으로 이동합니다.
-	public String insert() throws Exception {
-		return "board/add";
-	}
-
-	// @PostMapping("add"): 원본글을 등록합니다.
-	public String insert(QnaVO qnaVO, MultipartFile[] attaches) throws Exception {
-		int result = qnaService.insert(qnaVO, attaches);
-		return "redirect:./list";
-	}
-
-	// @GetMapping("update"): 글 수정 폼으로 이동합니다.
-	public String update(BoardVO noticeVO, Model model) throws Exception {
-		BoardVO boardVO = qnaService.detail(noticeVO);
-		model.addAttribute("vo", boardVO);
-		return "board/add";
-	}
-
-	// @PostMapping("update"): 글 수정을 처리합니다.
-	// !! 참고: 파라미터 타입이 NoticeVO로 되어있으나, QnaVO를 사용하는 것이 더 정확해 보입니다.
-	public String update(NoticeVO noticeVO, MultipartFile[] attaches, Model model) throws Exception {
-		int result = qnaService.update(noticeVO, attaches);
-		String msg = "수정 실패";
-		if (result > 0) {
-			msg = "수정 성공";
-		}
-		String url = "./detail?boardNum=" + noticeVO.getBoardNum();
-		model.addAttribute("msg", msg);
-		model.addAttribute("url", url);
-		return "commons/result";
-	}
-
-	// @PostMapping("delete"): 글 삭제를 처리합니다.
-	// !! 참고: 파라미터 타입이 NoticeVO로 되어있으나, QnaVO를 사용하는 것이 더 정확해 보입니다.
-	public String delete(NoticeVO noticeVO, Model model) throws Exception {
-		int result = qnaService.delete(noticeVO);
-		String msg = "삭제 실패";
-		if (result > 0) {
-			msg = "삭제 성공";
-		}
-		String url = "./list";
-		model.addAttribute("msg", msg);
-		model.addAttribute("url", url);
-		return "commons/result";
-	}
-
-	// @PostMapping("fileDelete"): AJAX를 이용해 첨부파일 하나를 삭제합니다.
+	// @ResponseBody: View를 거치지 않고, 반환값을 그대로 HTTP 응답 본문에 담아 전송합니다. (주로 AJAX용)
+	// @PostMapping("fileDelete"): POST 방식의 "/qna/fileDelete" 요청을 처리합니다.
+	@PostMapping("fileDelete")
 	@ResponseBody
-	public int fileDelete(BoardFileVO boardFileVO, Model model) throws Exception {
-		return qnaService.fileDelete(boardFileVO);
-	}
-
-	// @GetMapping("fileDown"): 파일을 다운로드합니다.
-	public String fileDown(BoardFileVO boardFileVO, Model model) throws Exception {
-		boardFileVO = qnaService.fileDetail(boardFileVO);
-		model.addAttribute("vo", boardFileVO);
-		return "fileDownView";
+	public int fileDelete(BoardFileVO boardFileVO) throws Exception {
+		// 첨부파일 번호로 파일을 삭제합니다.
+		int result = qnaService.fileDelete(boardFileVO);
+		// 성공 여부를 나타내는 숫자(int)가 클라이언트(브라우저)로 바로 전송됩니다.
+		return result;
 	}
 }
