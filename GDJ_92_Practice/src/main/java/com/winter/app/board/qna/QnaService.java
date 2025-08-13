@@ -8,10 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.winter.app.board.BoardFileVO;
-
 import com.winter.app.board.BoardService;
 import com.winter.app.board.BoardVO;
-import com.winter.app.board.notice.NoticeService;
 import com.winter.app.commons.FileManager;
 import com.winter.app.commons.Pager;
 
@@ -19,10 +17,6 @@ import com.winter.app.commons.Pager;
 @Service
 // BoardService 인터페이스를 구현(implements)합니다.
 public class QnaService implements BoardService {
-
-	// NoticeService를 주입받고 있으나, 이 클래스 내에서 사용되지 않고 있습니다.
-	// 코드를 정리하며 제거해도 좋을 것 같습니다.
-	private final NoticeService noticeService;
 
 	@Autowired
 	private QnaDAO qnaDAO; // Q&A 전용 DAO
@@ -35,11 +29,6 @@ public class QnaService implements BoardService {
 
 	@Value("${board.qna}")
 	private String board; // 게시판 이름
-
-	// 생성자를 통해 NoticeService를 주입(DI)합니다.
-	QnaService(NoticeService noticeService) {
-		this.noticeService = noticeService;
-	}
 
 	// 게시글 목록 조회 로직 (NoticeService와 동일한 구조)
 	@Override
