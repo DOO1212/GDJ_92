@@ -1,6 +1,7 @@
 package com.winter.app.board.notice;
 
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -11,9 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+
 import com.winter.app.board.BoardFileVO;
 import com.winter.app.board.BoardVO;
 import com.winter.app.commons.Pager;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Controller
@@ -114,4 +117,4 @@ public class NoticeController {
 		// 성공 여부를 나타내는 숫자(int)가 클라이언트(브라우저)로 바로 전송됩니다.
 		return result;
 	}
-}F
+}
