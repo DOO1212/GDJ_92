@@ -59,11 +59,6 @@ public class NoticeController {
 	// Spring이 URL의 파라미터(예: ?boardNum=1)를 보고 자동으로 NoticeVO 객체를 생성하고 값을 설정해줍니다.
 	@GetMapping("detail")
 	public String detail(NoticeVO noticeVO, Model model)throws Exception{
-		// 주석 처리된 코드는 과거의 방식입니다. Spring이 위와 같이 자동으로 처리해줍니다.
-//		String n=request.getParameter("boardNum");
-//		int num = Integer.parseInt(n);
-//		NoticeVO noticeVO = new NoticeVO();
-//		noticeVO.setBoardNum(num);
 		
 		// 서비스 계층에 요청하여 게시글의 상세 정보를 가져옵니다.
 		BoardVO boardVO = noticeService.detail(noticeVO);

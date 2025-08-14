@@ -7,97 +7,105 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.winter.app.board.BoardDAO;
 import com.winter.app.board.BoardFileVO;
 import com.winter.app.board.BoardService;
 import com.winter.app.board.BoardVO;
 import com.winter.app.commons.FileManager;
 import com.winter.app.commons.Pager;
 
-// @Service: 이 클래스가 비즈니스 로직을 처리하는 '서비스' 계층의 컴포넌트임을 Spring에게 알립니다.
+// @Service : 이 클래스가 비즈니스 로직을 처리하는 서비스 계층의 컴포넌트임을 Spring에 알립니다.
 @Service
-// BoardService 인터페이스를 구현(implements)합니다.
-// 즉, BoardService에 정의된 모든 메서드를 반드시 여기서 완성해야 합니다.
 public class NoticeService implements BoardService {
 	
+	// @Autowired : 의존성 주입(DI). Spring이 NoticeDAO 타입의 객체를 자동으로 연결해줍니다.
 	@Autowired
 	private NoticeDAO noticeDAO;
 	
+	// @Autowired : 의존성 주입(DI). Spring이 FileManager 타입의 객체를 자동으로 연결해줍니다.
 	@Autowired
 	private FileManager fileManager;
 	
-	// @Value: application.properties의 app.upload 값을 주입합니다. (파일 저장 기본 경로)
+	// @Value("${app.upload}") : application.properties 파일의 'app.upload' 속성 값을 변수 'upload'에 주입합니다. (예: D:/upload/)
 	@Value("${app.upload}")
 	private String upload;
 	
-	// @Value: application.properties의 board.notice 값을 주입합니다. (게시판 이름)
+	// @Value("${board.notice}") : application.properties 파일의 'board.notice' 속성 값을 변수 'board'에 주입합니다. (예: notice/)
 	@Value("${board.notice}")
 	private String board;
 
-	// 게시글 목록 조회 로직
+	// 페이징 처리된 게시글 목록을 가져오는 메서드입니다.
 	@Override
 	public List<BoardVO> list(Pager pager) throws Exception {
-		// 1. DAO를 호출해 전체 데이터 개수를 가져옵니다.
-		Long totalCount= noticeDAO.totalCount(pager);
-		// 2. Pager 객체에 전체 데이터 개수를 전달해 페이지 번호 등을 계산시킵니다.
+		// DAO를 호출하여 전체 게시글 개수를 가져옵니다.
+		Long totalCount = noticeDAO.totalCount(pager);
+		// Pager 객체에 전체 개수를 전달하여 페이지네이션 관련 계산을 수행시킵니다.
 		pager.makeNum(totalCount);
-		// 3. 페이지 계산이 완료된 Pager를 이용해 해당 페이지의 목록만 DAO에서 가져옵니다.
+		// 계산이 완료된 Pager 정보를 이용해 현재 페이지에 맞는 게시글 목록을 DAO로부터 가져와 반환합니다.
 		return noticeDAO.list(pager);
 	}
 	
-	// 게시글 상세 조회 로직
+	// 특정 게시글의 상세 정보를 가져오는 메서드입니다.
 	@Override
 	public BoardVO detail(BoardVO boardVO) throws Exception {
+		// DAO에 게시글 번호를 전달하여 해당 게시글의 상세 정보를 조회하고 반환합니다.
 		return noticeDAO.detail(boardVO);
 	}
 	
-	// 게시글 등록 로직 (파일 포함)
+	// 새 게시글과 첨부파일을 DB와 서버에 저장하는 메서드입니다.
 	@Override
 	public int insert(BoardVO boardVO, MultipartFile [] attaches) throws Exception {
-		// 1. DAO를 호출하여 게시글의 텍스트 내용부터 DB에 저장합니다.
-		//    이때 boardVO에 auto-increment된 boardNum 값이 담기게 됩니다.
+		// 먼저 게시글 내용(제목, 작성자 등)을 DB에 저장합니다. boardNum이 생성됩니다.
 		int result = noticeDAO.insert(boardVO);
 		
-		// 2. 첨부된 파일이 없으면 여기서 로직을 종료합니다.
+		// 첨부파일이 없으면 여기서 메서드를 종료합니다.
 		if(attaches == null) {
 			return result;
 		}
 	
-		// 3. 첨부파일들을 하나씩 처리합니다.
-		for(MultipartFile m:attaches) {
-			// 파일이 없거나 비어있으면 건너뜁니다.
+		// 첨부파일 배열을 반복 처리합니다.
+		for(MultipartFile m : attaches) {
+			// 파일이 비어있으면 건너뜁니다.
 			if(m == null || m.isEmpty()) {
 				continue;
 			}
-			// 3-1. FileManager를 이용해 파일을 하드디스크에 저장합니다. (예: D:/upload/notice/)
-			String fileName = fileManager.fileSave(upload+board, m);
+			// 1. FileManager를 이용해 파일을 서버의 하드디스크에 저장합니다. (예: D:/upload/notice/ 폴더)
+			String fileName = fileManager.fileSave(upload + board, m);
 			
-			// 3-2. 저장된 파일 정보를 담을 BoardFileVO 객체를 생성하고,
+			// 2. 저장된 파일의 정보를 BoardFileVO 객체에 담아 DB에 저장합니다.
 			BoardFileVO vo = new BoardFileVO();
-			vo.setOriName(m.getOriginalFilename()); // 원본 파일명
-			vo.setSaveName(fileName);              // 저장된 파일명
-			vo.setBoardNum(boardVO.getBoardNum()); // 어떤 게시글에 속하는지 (FK)
-			// DAO를 호출해 파일 정보를 DB에 저장합니다.
+			// 파일의 원본 이름을 저장합니다.
+			vo.setOriName(m.getOriginalFilename());
+			// 서버에 저장된 고유한 파일 이름을 저장합니다.
+			vo.setSaveName(fileName);
+			// 이 파일이 어떤 게시글에 속해있는지 알려주기 위해 게시글 번호를 저장합니다.
+			vo.setBoardNum(boardVO.getBoardNum());
 			result = noticeDAO.insertFile(vo);
 		}
+		// 최종 결과를 반환합니다.
 		return result;
 	}
 	
-	// 게시글 수정 로직 (파일 추가)
+	// 기존 게시글 내용과 첨부파일을 수정하는 메서드입니다.
 	@Override
 	public int update(BoardVO boardVO, MultipartFile [] attaches) throws Exception {
-		// 1. 게시글의 텍스트 내용을 먼저 수정합니다.
+		// 먼저 수정된 게시글 내용을 DB에 업데이트합니다.
 		int result = noticeDAO.update(boardVO);
 		
+		// 새로 추가된 첨부파일이 없으면 여기서 메서드를 종료합니다.
 		if(attaches == null) {
 			return result;
 		}
 		
-		// 2. 수정 시 새로 추가된 파일들을 저장합니다. (insert 로직과 동일)
-		for(MultipartFile m:attaches) {
+		// 새로 추가된 파일들을 저장하는 로직은 insert와 동일합니다.
+		for(MultipartFile m : attaches) {
 			if(m == null || m.isEmpty()) {
 				continue;
 			}
-			String fileName = fileManager.fileSave(upload+board, m);
+			// 1. 파일을 HDD에 저장합니다.
+			String fileName = fileManager.fileSave(upload + board, m);
+			
+			// 2. 저장된 파일 정보를 DB에 저장합니다.
 			BoardFileVO vo = new BoardFileVO();
 			vo.setOriName(m.getOriginalFilename());
 			vo.setSaveName(fileName);
@@ -108,57 +116,63 @@ public class NoticeService implements BoardService {
 		return result;
 	}
 	
-	// 게시글 삭제 로직
+	// 게시글과 관련된 모든 파일 및 DB 정보를 삭제하는 메서드입니다.
 	@Override
 	public int delete(BoardVO boardVO) throws Exception {
-		// 1. DB에서 게시글 정보를 조회하여, 이 글에 첨부된 파일 목록을 가져옵니다.
+		// 삭제할 파일들의 정보를 얻기 위해 게시글 상세 정보를 먼저 조회합니다.
 		boardVO = noticeDAO.detail(boardVO);
 		
-		// 2. 첨부된 파일들을 순회하며 하드디스크에서 물리적으로 삭제합니다.
+		// 게시글에 첨부된 파일 목록을 반복 처리합니다.
 		for(BoardFileVO vo : boardVO.getBoardFileVOs()) {
-			fileManager.fileDelete(upload+board, vo.getSaveName());
+			// FileManager를 이용해 서버에 저장된 실제 파일을 삭제합니다.
+			fileManager.fileDelete(upload + board, vo.getSaveName());
 		}
-		// 3. DB에서 해당 게시글에 속한 파일 정보들을 모두 삭제합니다.
-		int result = noticeDAO.fileDelete(boardVO);
-		// 4. 마지막으로 DB에서 게시글 자체를 삭제합니다.
+		// DB에서 이 게시물에 첨부된 모든 파일 정보를 삭제합니다. (ON DELETE CASCADE로 대체 가능)
+		// int result = noticeDAO.fileDelete(boardVO);
+		// 최종적으로 게시글 자체를 DB에서 삭제하고 결과를 반환합니다.
 		return noticeDAO.delete(boardVO);
 	}
 	
-	// 첨부파일 하나만 삭제하는 로직
+	// 첨부파일 한 개를 삭제하는 메서드입니다. (수정 페이지에서 파일 개별 삭제 시 사용)
 	@Override
 	public int fileDelete(BoardFileVO boardFileVO) throws Exception {
-		// 1. DB에서 파일 정보를 조회하여 실제 저장된 파일명을 알아냅니다.
+		// 1. DB에서 파일 번호(fileNum)로 파일의 상세 정보(saveName)를 조회합니다.
 		boardFileVO = noticeDAO.fileDetail(boardFileVO);
-		// 2. FileManager를 이용해 하드디스크에서 파일을 삭제합니다.
-		boolean result =fileManager.fileDelete(upload+board, boardFileVO.getSaveName());
-		// 3. DB에서 해당 파일의 정보 한 줄을 삭제합니다.
+		// 2. FileManager를 이용해 서버에 저장된 실제 파일을 삭제합니다.
+		boolean result = fileManager.fileDelete(upload + board, boardFileVO.getSaveName());
+		
+		// 3. 파일이 성공적으로 삭제되었다면, DB에서도 해당 파일 정보를 삭제하고 결과를 반환합니다.
 		return noticeDAO.fileDeleteOne(boardFileVO);
 	}
 	
-	// 첨부파일 상세 정보 조회
+	// 첨부파일 한 개의 상세 정보를 조회하는 메서드입니다. (파일 다운로드 시 사용)
 	@Override
 	public BoardFileVO fileDetail(BoardFileVO boardFileVO) throws Exception {
+		// DAO에 파일 번호를 전달하여 상세 정보를 조회하고 반환합니다.
 		return noticeDAO.fileDetail(boardFileVO);
 	}
-	
-	// AJAX용 임시 파일 업로드 로직
+
+	// Summernote와 같은 에디터에서 이미지를 업로드 처리하는 메서드입니다.
 	@Override
 	public String boardFile(MultipartFile multipartFile) throws Exception {
-		if(multipartFile ==null || multipartFile.getSize() ==0) {
+		// 업로드된 파일이 없으면 null을 반환합니다.
+		if(multipartFile == null || multipartFile.getSize() == 0) {
 			return null;
 		}
-		// 파일을 하드디스크에 저장하고,
-		String filename=fileManager.fileSave(upload+board, multipartFile);
-		// 브라우저에서 접근 가능한 URL 경로를 만들어 반환합니다.
-		return "/files/"+board+"/"+filename;
+		// FileManager를 이용해 파일을 서버에 저장하고, 저장된 파일명을 받아옵니다.
+		String filename = fileManager.fileSave(upload + board, multipartFile);
+		
+		// 에디터가 이미지를 표시할 수 있도록 웹 접근 경로(URL)를 만들어 반환합니다.
+		return "/files/" + board + "/" + filename;
 	}
-	
-	// AJAX용 임시 파일 삭제 로직
+
+	// Summernote 에디터에서 이미지를 삭제 처리하는 메서드입니다.
 	@Override
 	public boolean boardFileDelete(String fileName) throws Exception {
-		// 전체 URL 경로에서 파일명 부분만 추출합니다.
-		fileName = fileName.substring(fileName.lastIndexOf("/")+1);
-		// 해당 파일을 하드디스크에서 삭제하고 성공 여부를 반환합니다.
-		return fileManager.fileDelete(upload+board, fileName);
+		// 전달받은 전체 URL 경로(예: /files/notice/image.jpg)에서 마지막 파일 이름 부분만 추출합니다.
+		fileName = fileName.substring(fileName.lastIndexOf("/"));
+		
+		// FileManager를 이용해 서버에서 해당 파일을 삭제하고 성공 여부를 반환합니다.
+		return fileManager.fileDelete(upload + board, fileName);
 	}
 }
