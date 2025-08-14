@@ -20,8 +20,11 @@ for(a of actions1){
 			frm.setAttribute("method", "POST");
 			frm.setAttribute("action", "./delete")
 			frm.submit();
-		}else {
+		}else if(kind=='u') {
 			frm.setAttribute("action", "./update")
+			frm.submit();
+		}else {
+			frm.setAttribute("action", "./reply")
 			frm.submit();
 		}
 		
