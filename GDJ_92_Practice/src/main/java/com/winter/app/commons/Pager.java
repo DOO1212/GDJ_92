@@ -3,109 +3,168 @@ package com.winter.app.commons;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * 게시판의 페이징 처리와 검색에 필요한 데이터와 연산을 담당하는 클래스입니다.
+ * 이 객체 하나로 페이징과 관련된 모든 정보를 관리하여 Controller, Service, DAO 간의 데이터 전달을 용이하게 합니다.
+ * @author winter
+ */
 @Getter
 @Setter
 public class Pager {
-
-	// ----- DB에서 데이터를 가져올 때 필요한 값들 -----
-
-	// DB의 limit 절에서 사용할 시작 인덱스 번호 (예: 0, 10, 20...)
+	
+	//------------- DB에서 데이터를 가져올 때 사용하는 값들 -------------
+	
+	/**
+	 * DB의 LIMIT 구문에서 사용할 시작 인덱스 번호입니다.
+	 * (예: 1페이지는 0, 2페이지는 10부터 시작)
+	 * makePage() 메서드에 의해 계산됩니다.
+	 */
 	private Long startIndex;
-
-	// DB의 limit 절에서 사용할 가져올 데이터의 개수 (MySQL/MariaDB 기준)
+	
+	/**
+	 * 한 페이지에 보여줄 데이터(row)의 개수입니다.
+	 * getPerPage()에서 기본값(10)이 설정됩니다.
+	 */
 	private Long perPage;
+	
+	//------------- 클라이언트(브라우저)에서 전달받는 값들 -------------
 
-	// ----- 사용자가 요청한 값 (파라미터) -----
-
-	// 현재 페이지 번호 (예: 1, 2, 3...)
+	/**
+	 * 사용자가 현재 보고 있는 페이지 번호입니다.
+	 * (예: 1, 2, 3...)
+	 * getPageNum()에서 기본값(1)이 설정됩니다.
+	 */
 	private Long pageNum;
-
-	// 검색 종류 (예: 'k1'은 제목, 'k2'는 내용)
+	
+	/**
+	 * 검색 종류를 나타냅니다. (예: "title", "contents", "writer")
+	 * 이 값에 따라 Mapper(XML)에서 다른 검색 쿼리를 수행합니다.
+	 */
 	private String kind;
-
-	// 검색어
+	
+	/**
+	 * 사용자가 입력한 검색어입니다.
+	 */
 	private String keyword;
-
-	// ----- 계산을 통해 만들어지는 값들 (View에서 사용) -----
-
-	// 전체 페이지의 총 개수
+	
+	//------------- DB 조회 후 계산해서 View(JSP)로 보내는 값들 -------------
+	
+	/**
+	 * 전체 페이지의 총개수입니다.
+	 * makeNum() 메서드에서 계산됩니다.
+	 */
 	private Long totalPage;
-
-	// 페이지네이션 블럭의 시작 번호 (예: 1, 6, 11...)
+	
+	/**
+	 * 현재 페이지 블럭의 시작 번호입니다.
+	 * (예: 현재 3페이지고, 한 블럭에 5개씩 보여준다면 시작 번호는 1)
+	 * makeNum() 메서드에서 계산됩니다.
+	 */
 	private Long startNum;
-	// 페이지네이션 블럭의 끝 번호 (예: 5, 10, 15...)
+	
+	/**
+	 * 현재 페이지 블럭의 끝 번호입니다.
+	 * (예: 현재 3페이지고, 한 블럭에 5개씩 보여준다면 끝 번호는 5)
+	 * makeNum() 메서드에서 계산됩니다.
+	 */
 	private Long endNum;
 
-	// SQL의 LIMIT 값을 계산하는 내부 메서드
+	
+	/**
+	 * pageNum(현재 페이지 번호)과 perPage(페이지당 데이터 수)를 이용해
+	 * DB에서 데이터를 조회할 때 필요한 startIndex 값을 계산합니다.
+	 * 이 메서드는 makeNum() 내부에서 마지막에 호출됩니다.
+	 */
 	private void makePage() {
-		// 시작 인덱스 계산: (현재 페이지 번호 - 1) * 페이지당 보여줄 개수
+		// SQL의 LIMIT 구문에 사용할 값을 계산합니다.
+		// 공식: 시작 인덱스 = (현재 페이지 번호 - 1) * 페이지당 데이터 수
 		this.startIndex = (this.getPageNum() - 1) * this.getPerPage();
 	}
-
-	// 페이징에 필요한 모든 숫자를 계산하는 핵심 메서드
+	
+	/**
+	 * 전체 데이터 개수(totalCount)를 받아서 페이징에 필요한 모든 값들을 계산하고 멤버 변수에 세팅합니다.
+	 * 이 메서드는 Service 계층에서 호출됩니다.
+	 * @param totalCount DB에 있는 전체 데이터의 총개수
+	 */
 	public void makeNum(Long totalCount) {
-
-		// 1. totalPage : 전체 페이지 개수 계산
-		// 전체 데이터 개수(totalCount)를 페이지당 보여줄 개수(perPage)로 나눕니다.
+		
+		// 1. totalPage (전체 페이지 수) 계산
+		// 전체 데이터 수를 페이지당 보여줄 데이터 수로 나눈 후, 나머지가 있으면 1페이지를 더합니다.
 		this.totalPage = totalCount / this.getPerPage();
-		// 만약 나머지가 있다면(데이터가 하나라도 더 있다면), 페이지를 하나 더 추가합니다.
-		if (totalCount % this.getPerPage() != 0) {
+		if(totalCount % this.getPerPage() != 0) {
 			this.totalPage++;
 		}
-
-		// 2. totalBlock : 전체 블럭의 개수 계산
-		// 블럭당 보여줄 페이지 번호의 개수 (예: 5개씩 -> [1][2][3][4][5])
-		Long perBlock = 5L;
-		// 전체 페이지 개수를 블럭당 개수로 나누어 총 몇 개의 블럭이 필요한지 계산합니다.
+		
+		// 2. totalBlock (전체 페이지 블럭 수) 계산
+		Long perBlock = 5L; // 한 번에 보여줄 페이지 번호의 개수 (예: [1][2][3][4][5])
 		Long totalBlock = this.totalPage / perBlock;
-		if (this.totalPage % perBlock != 0) {
+		if(this.totalPage % perBlock != 0) {
 			totalBlock++;
 		}
-
-		// 3. 현재 페이지 번호로 현재 블럭 번호를 계산
+		
+		// 3. curBlock (현재 페이지 블럭 번호) 계산
+		// 현재 페이지 번호를 블럭당 페이지 수로 나누어 현재 몇 번째 블럭에 있는지 계산합니다.
 		Long curBlock = this.getPageNum() / perBlock;
-		if (this.getPageNum() % perBlock != 0) {
+		if(this.getPageNum() % perBlock != 0) {
 			curBlock++;
 		}
-
-		// 4. 현재 블럭 번호로 시작 번호와 끝 번호를 계산
+		
+		// 4. startNum, endNum (현재 블럭의 시작/끝 페이지 번호) 계산
 		this.startNum = (curBlock - 1) * perBlock + 1;
 		this.endNum = curBlock * perBlock;
-
-		// 5. 현재 블럭이 마지막 블럭일 경우, 끝 번호를 전체 페이지 번호로 맞춥니다.
-		// (예: 총 페이지가 13일 때, 마지막 블럭은 [11][12][13]이 되어야 함)
-		if (curBlock == totalBlock) {
+		
+		// 5. 마지막 블럭 처리
+		// 현재 블럭이 마지막 블럭이라면, endNum을 전체 페이지 수(totalPage)로 맞춥니다.
+		// (예: 전체 12페이지일 때, 마지막 블럭은 [11][12]가 되어야 하므로 endNum은 15가 아닌 12가 됩니다.)
+		if(curBlock == totalBlock) {
 			this.endNum = this.totalPage;
 		}
-
-		// 6. DB에서 사용할 limit의 시작 인덱스를 계산합니다.
+		
+		// --- 페이징 계산이 끝난 후, DB 조회를 위한 값 계산 ---
 		this.makePage();
 	}
+	
+	//------------- Getter 재정의(Override) -------------
+	// Lombok의 @Getter가 있더라도, 특정 로직을 추가하고 싶을 때 직접 만들 수 있습니다.
 
-	// --- 안정성을 높여주는 커스텀 Getter 메서드들 ---
-
-	// keyword 값이 null일 경우, 빈 문자열("")을 반환하여 NullPointerException을 방지합니다.
+	/**
+	 * 검색어가 null일 경우, 쿼리 에러를 방지하기 위해 빈 문자열("")을 반환합니다.
+	 * @return 검색어 문자열 (null이 아님을 보장)
+	 */
 	public String getKeyword() {
-		if (this.keyword == null) {
+		if(this.keyword == null) {
 			this.keyword = "";
 		}
 		return this.keyword;
 	}
 
-	// perPage 값이 null일 경우, 기본값으로 10을 설정합니다.
+	/**
+	 * 페이지당 보여줄 데이터 개수(perPage)가 설정되지 않았을 경우, 기본값 10을 반환합니다.
+	 * @return 페이지당 데이터 수 (null이 아님을 보장)
+	 */
 	public Long getPerPage() {
-		if (this.perPage == null || this.perPage < 1) {
+		if(this.perPage == null || this.perPage < 1) {
 			this.perPage = 10L;
 		}
 		return perPage;
 	}
 
-	// pageNum 값이 null이거나 1보다 작을 경우, 기본값으로 1을 설정합니다.
+	/**
+	 * 요청된 페이지 번호(pageNum)가 없거나 1보다 작을 경우, 기본값 1을 반환합니다.
+	 * 만약 계산된 전체 페이지 수보다 큰 페이지를 요청하면, 마지막 페이지 번호를 반환합니다.
+	 * @return 현재 페이지 번호 (유효한 범위 내의 값임을 보장)
+	 */
 	public Long getPageNum() {
-		if (this.pageNum == null || this.pageNum < 1) {
+		if(this.pageNum == null || this.pageNum < 1) {
 			this.pageNum = 1L;
 		}
+		
+		// totalPage는 makeNum() 실행 전에는 0 또는 null일 수 있으므로,
+		// totalPage가 계산된 후에만 이 로직이 의미를 가집니다.
+		if(this.totalPage != null && this.pageNum > this.totalPage) {
+			this.pageNum = this.totalPage;
+		}
+		
 		return pageNum;
 	}
-
 }
