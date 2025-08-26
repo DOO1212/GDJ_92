@@ -13,36 +13,36 @@ import java.time.LocalDateTime;
 @Setter
 public class FileVO {
 
-    // // PK 컬럼 매핑: upload_file.file_id → id
+    // PK 컬럼 매핑
     private Long id;
 
-    // // 원본 파일명 컬럼 매핑: upload_file.origin_name → originName
+    // 원본 파일명 컬럼 매핑
     private String originName;
 
-    // // 서버 저장 파일명 컬럼 매핑: upload_file.save_name → savedName
+    // 서버 저장 파일명 컬럼 매핑
     private String savedName;
 
-    // // MIME 타입 컬럼 매핑: upload_file.content_type → contentType
+    // MIME 타입 컬럼 매핑
     private String contentType;
 
-    // // 파일 크기(바이트) 컬럼 매핑: upload_file.file_size → fileSize
+    // 파일 크기(바이트) 컬럼 매핑
     private Long fileSize;
 
-    // // 파일 확장자 컬럼 매핑: upload_file.file_ext → fileExt
+    // 파일 확장자 컬럼 매핑
     private String fileExt;
 
-    // // 서버 저장 경로(상대경로 권장) 컬럼 매핑: upload_file.file_path → filePath
+    // 서버 저장 경로(상대경로 권장) 컬럼 매핑
     private String filePath;
 
-    // // 다운로드 횟수 컬럼 매핑: upload_file.download_count → downloadCount
+    // 다운로드 횟수 컬럼 매핑
     private Integer downloadCount;
 
-    // // 삭제 여부(0:정상,1:삭제) 컬럼 매핑: upload_file.deleted → deleted
+    // 삭제 여부(0:정상,1:삭제) 컬럼 매핑
     private Integer deleted;
 
-    // // 등록일 컬럼 매핑: upload_file.reg_date → regDate
+    // 등록일 컬럼 매핑
     private LocalDateTime regDate;
 
-    // // 수정일 컬럼 매핑: upload_file.mod_date → modDate
+    // 수정일 컬럼 매핑
     private LocalDateTime modDate;
 }

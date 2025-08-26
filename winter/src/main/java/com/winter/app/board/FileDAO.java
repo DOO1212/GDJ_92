@@ -11,34 +11,34 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface FileDAO {
 
-	// // 파일 메타데이터를 INSERT 한다 (매퍼 id: insertFile)
-	// // 파라미터: FileVO (originName, savedName, contentType, fileSize, fileExt,
+	// 파일 메타데이터를 INSERT 한다 (매퍼 id: insertFile)
+	// 파라미터: FileVO (originName, savedName, contentType, fileSize, fileExt,
 	// filePath 필수)
-	// // 반환값: 영향받은 행 수(성공 시 1)
+	// 반환값: 영향받은 행 수(성공 시 1)
 	int insertFile(FileVO vo);
 
-	// // 삭제되지 않은 파일 목록을 조회한다 (매퍼 id: selectFileList)
-	// // 파라미터: 없음
-	// // 반환값: FileVO 리스트
+	// 삭제되지 않은 파일 목록을 조회한다 (매퍼 id: selectFileList)
+	// 파라미터: 없음
+	// 반환값: FileVO 리스트
 	List<FileVO> selectFileList();
 
-	// // PK 기준 단건을 조회한다 (매퍼 id: selectFile)
-	// // 파라미터: id (upload_file.file_id)
-	// // 반환값: FileVO (없으면 null)
+	// PK 기준 단건을 조회한다 (매퍼 id: selectFile)
+	// 파라미터: id (upload_file.file_id)
+	// 반환값: FileVO (없으면 null)
 	FileVO selectFile(long id);
 
-	// // PK 기준 물리 삭제를 수행한다 (매퍼 id: deleteFile)
-	// // 파라미터: id
-	// // 반환값: 영향받은 행 수
+	// PK 기준 물리 삭제를 수행한다 (매퍼 id: deleteFile)
+	// 파라미터: id
+	// 반환값: 영향받은 행 수
 	int deleteFile(long id);
 
-	// // PK 기준 논리 삭제를 수행한다 (매퍼 id: softDeleteFile)
-	// // 파라미터: id
-	// // 반환값: 영향받은 행 수
+	// PK 기준 논리 삭제를 수행한다 (매퍼 id: softDeleteFile)
+	// 파라미터: id
+	// 반환값: 영향받은 행 수
 	int softDeleteFile(long id);
 
-	// // PK 기준 다운로드 횟수를 1 증가시킨다 (매퍼 id: increaseDownloadCount)
-	// // 파라미터: id
-	// // 반환값: 영향받은 행 수
+	// PK 기준 다운로드 횟수를 1 증가시킨다 (매퍼 id: increaseDownloadCount)
+	// 파라미터: id
+	// 반환값: 영향받은 행 수
 	int increaseDownloadCount(long id);
 }
