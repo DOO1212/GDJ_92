@@ -1,56 +1,88 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- MyBatis 매퍼 DTD 를 선언한다 -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 매퍼의 네임스페이스를 DAO 인터페이스 FQCN 으로 지정한다 -->
 <mapper namespace="com.winter.app.board.FileDAO">
 
-	<!-- 파일 저장 -->
+	<!-- upload_file 테이블을 FileVO 로 매핑하는 resultMap 을 정의한다 -->
+	<resultMap id="FileMap" type="com.winter.app.board.FileVO">
+		<!-- PK file_id 를 VO.id 로 매핑한다 -->
+		<id property="id" column="file_id" />
+		<!-- 원본 파일명 origin_name 을 VO.originName 으로 매핑한다 -->
+		<result property="originName" column="origin_name" />
+		<!-- 저장 파일명 save_name 을 VO.savedName 으로 매핑한다 -->
+		<result property="savedName" column="save_name" />
+		<!-- MIME 타입 content_type 을 VO.contentType 으로 매핑한다 -->
+		<result property="contentType" column="content_type" />
+		<!-- 파일 크기 file_size 를 VO.fileSize 로 매핑한다 -->
+		<result property="fileSize" column="file_size" />
+		<!-- 확장자 file_ext 를 VO.fileExt 로 매핑한다 -->
+		<result property="fileExt" column="file_ext" />
+		<!-- 저장 경로 file_path 를 VO.filePath 로 매핑한다 -->
+		<result property="filePath" column="file_path" />
+		<!-- 다운로드 횟수 download_count 를 VO.downloadCount 로 매핑한다 -->
+		<result property="downloadCount" column="download_count" />
+		<!-- 삭제 여부 deleted 를 VO.deleted 로 매핑한다 -->
+		<result property="deleted" column="deleted" />
+		<!-- 등록일 reg_date 를 VO.regDate 로 매핑한다 -->
+		<result property="regDate" column="reg_date" />
+		<!-- 수정일 mod_date 를 VO.modDate 로 매핑한다 -->
+		<result property="modDate" column="mod_date" />
+	</resultMap>
+
+	<!-- 파일 메타데이터를 INSERT 한다 -->
 	<insert id="insertFile"
-		parameterType="com.winter.app.board.FileVO">
+		parameterType="com.winter.app.board.FileVO" useGeneratedKeys="true"
+		keyProperty="id" keyColumn="file_id">
+		<!-- upload_file 에 필요한 컬럼을 지정한다 -->
 		INSERT INTO upload_file
-		(origin_name, saved_name, file_size,
-		content_type)
+		(origin_name, save_name, content_type, file_size, file_ext, file_path)
+		<!-- VO 의 값을 바인딩한다 -->
 		VALUES
-		(#{originName}, #{savedName}, #{fileSize},
-		#{contentType})
-		<!-- // origin_name ⇄ originName, saved_name ⇄ savedName 자동 매핑 -->
+		(#{originName}, #{savedName}, #{contentType}, #{fileSize}, #{fileExt}, #{filePath})
 	</insert>
 
-	<!-- 파일 목록 조회 -->
-	<select id="selectFileList"
-		resultType="com.winter.app.board.FileVO">
+	<!-- 삭제되지 않은 파일 목록을 조회한다 -->
+	<select id="selectFileList" resultMap="FileMap">
+		<!-- 삭제 플래그가 0 인 행만 최신순으로 조회한다 -->
 		SELECT
-		id AS id,
-		origin_name AS originName,
-		saved_name AS savedName,
-		file_size AS fileSize,
-		content_type AS contentType,
-		reg_date AS regDate
+		file_id, origin_name, save_name, content_type, file_size,
+		file_ext, file_path, download_count, deleted, reg_date, mod_date
 		FROM upload_file
-		ORDER BY id DESC
-		<!-- // snake_case 컬럼을 camelCase 필드로 alias 지정 -->
+		WHERE deleted = 0
+		ORDER BY reg_date DESC
 	</select>
 
-	<!-- 파일 상세 조회 -->
-	<select id="selectFile" parameterType="long"
-		resultType="com.winter.app.board.FileVO">
+	<!-- PK 기준 단건을 조회한다 -->
+	<select id="selectFile" parameterType="long" resultMap="FileMap">
+		<!-- file_id 로 단건을 조회한다 -->
 		SELECT
-		id AS id,
-		origin_name AS originName,
-		saved_name AS savedName,
-		file_size AS fileSize,
-		content_type AS contentType,
-		reg_date AS regDate
+		file_id, origin_name, save_name, content_type, file_size,
+		file_ext, file_path, download_count, deleted, reg_date, mod_date
 		FROM upload_file
-		WHERE id = #{id}
-		<!-- // #{id} 파라미터는 DAO 메서드의 매개변수와 이름/타입이 일치해야 함 -->
+		WHERE file_id = #{id}
 	</select>
 
-	<!-- 필요 시: 물리 삭제(논리삭제 컬럼 없을 때) -->
+	<!-- PK 기준 물리 삭제를 수행한다 -->
 	<delete id="deleteFile" parameterType="long">
+		<!-- file_id 로 행을 삭제한다 -->
 		DELETE FROM upload_file
-		WHERE id = #{id}
+		WHERE file_id = #{id}
 	</delete>
 
+	<!-- PK 기준 논리 삭제를 수행한다 -->
+	<update id="softDeleteFile" parameterType="long">
+		<!-- deleted=1 로 표시하고 수정일을 갱신한다 -->
+		UPDATE upload_file
+		SET deleted = 1, mod_date = NOW()
+		WHERE file_id = #{id}
+	</update>
+
+	<!-- PK 기준 다운로드 횟수를 1 증가시킨다(선택 기능) -->
+	<update id="increaseDownloadCount" parameterType="long">
+		<!-- download_count 를 1 증가시키고 수정일을 갱신한다 -->
+		UPDATE upload_file
+		SET download_count = download_count + 1, mod_date = NOW()
+		WHERE file_id = #{id}
+	</update>
 </mapper>

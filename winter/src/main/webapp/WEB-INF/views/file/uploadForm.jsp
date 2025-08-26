@@ -1,42 +1,50 @@
-<%-- 페이지 지시자: JSP 설정 (언어/인코딩) --%>
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-
-<%-- JSTL 코어 태그 사용을 위한 선언 --%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-
-<%-- 컨텍스트 경로를 변수로 보관 (링크 작성 편의) --%>
-<c:set var="cPath" value="${pageContext.request.contextPath}" />
-
-<%-- 문서 타입 선언 --%>
+<%-- /WEB-INF/views/file/uploadForm.jsp --%>
+<%-- 업로드 폼의 기본 페이지 지시자 --%>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
-<%-- HTML 시작 --%>
 <html>
-<%-- 문서 메타 정보 설정 --%>
 <head>
-<%-- 문서 인코딩 지정 --%>
-<meta charset="UTF-8">
-<%-- 브라우저 탭에 표시될 제목 --%>
+<%-- 제목을 설정한다 --%>
 <title>파일 업로드</title>
+<%-- 간단한 스타일을 추가한다 --%>
+<style>
+/* 래퍼와 버튼 스타일 */
+.wrap {
+	width: 480px;
+	margin: 48px auto;
+}
+
+.btn {
+	border: none;
+	background: #205DAC;
+	color: #fff;
+	padding: 8px 14px;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.btn:hover {
+	background: #3E7AC8;
+}
+</style>
 </head>
-<%-- 문서 본문 시작 --%>
 <body>
-
-	<%-- 업로드 안내 헤더 --%>
-	<h1>파일 업로드</h1>
-
-	<%-- 루트(D:/upload/)에 저장하는 간단 업로드 폼 --%>
-	<form action="${cPath}/file/upload" method="post" enctype="multipart/form-data"
-		style="margin-top: 16px">
-		<%-- 업로드할 파일 선택 --%>
-		<input type="file" name="file" required />
-		<%-- 업로드 전송 버튼 --%>
-		<button type="submit">간단 업로드(루트)</button>
-	</form>
-
-	<%-- 파일 목록 페이지로 이동하는 링크 --%>
-	<p style="margin-top: 16px">
-		<a href="${cPath}/file/list">파일 목록 보기</a>
-	</p>
-
+	<%-- 업로드 폼을 렌더링한다 --%>
+	<div class="wrap">
+		<%-- 목록으로 돌아가는 버튼 --%>
+		<p>
+			<a class="btn" href="${pageContext.request.contextPath}/file/list">목록</a>
+		</p>
+		<%-- multipart/form-data 로 설정하고 input name="file" 을 컨트롤러와 일치시킨다 --%>
+		<form action="${pageContext.request.contextPath}/file/upload" method="post"
+			enctype="multipart/form-data">
+			<p>
+				<input type="file" name="file" required>
+			</p>
+			<p>
+				<button class="btn" type="submit">업로드</button>
+			</p>
+		</form>
+	</div>
 </body>
 </html>

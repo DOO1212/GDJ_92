@@ -1,177 +1,153 @@
-// 패키지 선언: 이 클래스가 속한 네임스페이스를 지정
+// FileService.java
+// // 목적: 파일 업로드/조회/삭제 등 비즈니스 로직을 담당하고 DAO를 호출한다
 package com.winter.app.board;
 
-// 자바 표준 라이브러리: 파일 경로/폴더 생성, 리스트 반환 등에 사용
-import java.io.File;
+// // 파일 저장 경로/이름 생성을 위해 사용
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+// // 날짜 기반 하위 폴더 생성을 위해 사용
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+// // 랜덤 파일명을 위해 사용
+import java.util.Locale;
+import java.util.UUID;
+// // 목록 조회 반환을 위해 사용
 import java.util.List;
-
-// 스프링: 설정값 주입과 서비스 빈 등록에 사용
-import org.springframework.beans.factory.annotation.Value;
+// // 스프링 서비스 빈을 선언하기 위해 사용
 import org.springframework.stereotype.Service;
-
-// 롬복: 생성자 자동 생성(생성자 주입)으로 의존성 주입 간결화
+// // 트랜잭션 경계를 선언하기 위해 사용
+import org.springframework.transaction.annotation.Transactional;
+// // 설정값 주입(@Value)을 사용하기 위해 import
+import org.springframework.beans.factory.annotation.Value;
+// // 멀티파트 파일 업로드를 위해 사용
+import org.springframework.web.multipart.MultipartFile;
+// // 생성자 주입을 위한 롬복 어노테이션
 import lombok.RequiredArgsConstructor;
 
-// 스프링 MVC: 업로드 파라미터 타입
-import org.springframework.web.multipart.MultipartFile;
-
-// 서비스 계층을 나타내는 애노테이션(스프링 빈 등록)
+// // 서비스 컴포넌트로 등록한다
 @Service
-// final 필드에 대한 생성자를 자동으로 만들어 주입(권장: 생성자 주입)
+// // final 필드 기반의 생성자를 자동 생성하여 생성자 주입을 편하게 한다
 @RequiredArgsConstructor
 public class FileService {
 
-    // DAO(매퍼 인터페이스) 의존성: DB CRUD를 담당
-    private FileDAO fileDAO;
+	// // DAO 프록시를 생성자 주입으로 받는다
+	private final FileDAO fileDAO;
 
-    // 업로드 루트 물리 경로 주입(예: D:/upload/)
-    @Value("${app.upload}")
-    private String baseUploadDir;
+	// // application.properties 의 app.upload 값을 주입받아 업로드 루트 디렉터리로 사용한다
+	@Value("${app.upload}")
+	private String uploadRoot;
 
-    // 게시판별 하위 폴더 경로 주입(예: notice/ , qna/ , member/)
-    @Value("${board.notice}")
-    private String noticeSubDir;
+	// // 파일 메타데이터 목록을 조회한다(삭제되지 않은 행만 조회하는 SQL을 매퍼가 수행)
+	// // 읽기 전용 트랜잭션을 사용한다
+	@Transactional(readOnly = true)
+	public List<FileVO> list() {
+		// // DAO에게 목록 조회를 위임하고 결과를 반환한다
+		return fileDAO.selectFileList();
+	}
 
-    // QnA 게시판 하위 폴더
-    @Value("${board.qna}")
-    private String qnaSubDir;
+	// // PK 기준 단건을 조회한다
+	// // 읽기 전용 트랜잭션을 사용한다
+	@Transactional(readOnly = true)
+	public FileVO detail(long id) {
+		// // DAO에게 단건 조회를 위임하고 결과를 반환한다
+		return fileDAO.selectFile(id);
+	}
 
-    // 회원 프로필 하위 폴더
-    @Value("${board.member}")
-    private String memberSubDir;
+	// // 파일을 디스크에 저장하고 메타데이터를 DB에 INSERT 한다
+	// // 성공 시 생성된 PK(file_id)를 반환한다
+	@Transactional
+	public long uploadAndSave(MultipartFile mf) throws IOException {
+		// // 널 또는 빈 파일이면 예외를 던진다
+		if (mf == null || mf.isEmpty())
+			throw new IllegalArgumentException("empty file");
 
-    // 업로드(기본형): 하위 폴더 없이 루트에 저장하고 DB 메타데이터를 기록
-    public void uploadFile(MultipartFile mf) throws Exception {
-        // 업로드 파일 존재 검사: 비어 있으면 예외
-        if (mf == null || mf.isEmpty()) throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+		// // 원본 파일명을 확보한다
+		String originName = mf.getOriginalFilename();
 
-        // 원본 파일명 추출
-        String originName = mf.getOriginalFilename();
+		// // 확장자를 소문자로 계산한다(없으면 bin으로 대체)
+		String fileExt = extractExtLower(originName);
 
-        // 확장자 추출(확장자가 없을 수도 있으므로 방어 코드)
-        String ext = "";
-        if (originName != null) {
-            int idx = originName.lastIndexOf('.');
-            if (idx > -1) ext = originName.substring(idx);
-        }
+		// // 저장할 상대 경로를 yyyy/MM/dd 형태로 만든다(예: 2025/08/26)
+		String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
 
-        // 서버 저장 파일명: 충돌 방지를 위해 UUID 사용
-        String uuidName = java.util.UUID.randomUUID().toString() + ext;
+		// // 업로드 루트 + 날짜 경로로 디렉터리 객체를 만든다
+		Path dir = Paths.get(uploadRoot, datePath);
 
-        // 물리 저장 디렉토리 객체 생성(루트 폴더)
-        File dir = new File(baseUploadDir);
+		// // 디렉터리가 없으면 생성한다(중첩 디렉터리 포함)
+		Files.createDirectories(dir);
 
-        // 폴더가 없으면 생성
-        if (!dir.exists()) dir.mkdirs();
+		// // 저장할 파일명을 UUID.확장자 형태로 생성한다
+		String savedName = UUID.randomUUID().toString() + "." + fileExt;
 
-        // 실제 저장 대상 파일 객체 생성(루트/UUID파일명)
-        File dest = new File(dir, uuidName);
+		// // 최종 저장 경로를 만든다
+		Path target = dir.resolve(savedName);
 
-        // 바이너리 데이터 디스크에 저장
-        mf.transferTo(dest);
+		// // 멀티파트 파일을 디스크로 저장한다
+		mf.transferTo(target.toFile());
 
-        // MIME 타입 결정(없으면 기본값 사용)
-        String contentType = mf.getContentType();
-        if (contentType == null || contentType.isBlank()) contentType = "application/octet-stream";
+		// // 파일 메타데이터 객체를 생성한다
+		FileVO vo = new FileVO();
 
-        // DB에 기록할 메타데이터 준비(savedName은 파일명만 저장)
-        FileVO vo = new FileVO();
-        vo.setOriginName(originName);
-        vo.setSavedName(uuidName);
-        vo.setFileSize(mf.getSize());
-        vo.setContentType(contentType);
+		// // 원본 파일명을 세팅한다
+		vo.setOriginName(originName);
 
-        // INSERT 실행(매퍼 XML의 insertFile과 연결)
-        fileDAO.insertFile(vo);
-    }
+		// // 저장 파일명을 세팅한다(DB 컬럼: save_name)
+		vo.setSavedName(savedName);
 
-    // 업로드(확장형): 게시판 타입에 따라 하위 폴더에 저장하고, DB에는 상대경로로 기록
-    public void uploadFileToBoard(MultipartFile mf, String boardType) throws Exception {
-        // 업로드 파일 유효성 체크
-        if (mf == null || mf.isEmpty()) throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+		// // MIME 타입을 세팅한다(널일 경우 application/octet-stream 으로 대체)
+		vo.setContentType(mf.getContentType() != null ? mf.getContentType() : "application/octet-stream");
 
-        // 원본 파일명 추출
-        String originName = mf.getOriginalFilename();
+		// // 파일 크기를 세팅한다
+		vo.setFileSize(mf.getSize());
 
-        // 확장자 추출
-        String ext = "";
-        if (originName != null) {
-            int idx = originName.lastIndexOf('.');
-            if (idx > -1) ext = originName.substring(idx);
-        }
+		// // 확장자를 세팅한다(DB 컬럼: file_ext NOT NULL 이므로 필수)
+		vo.setFileExt(fileExt);
 
-        // 서버 저장 파일명(UUID)
-        String uuidName = java.util.UUID.randomUUID().toString() + ext;
+		// // 저장 상대 경로를 세팅한다(DB 컬럼: file_path NOT NULL 이므로 필수)
+		vo.setFilePath(datePath);
 
-        // 게시판 타입을 하위 폴더명으로 변환(notice/qna/member/ 또는 "")
-        String subDir = resolveSubDir(boardType);
+		// // DAO에게 INSERT 를 위임한다(useGeneratedKeys 로 PK가 vo.id 로 채워진다)
+		fileDAO.insertFile(vo);
 
-        // 실제 저장 디렉토리(루트 + 하위 폴더)
-        File dir = new File(baseUploadDir, subDir);
+		// // 생성된 PK 값을 반환한다
+		return vo.getId();
+	}
 
-        // 디렉토리 보장(없으면 생성)
-        if (!dir.exists()) dir.mkdirs();
+	// // PK 기준으로 물리 삭제한다(실제 행을 제거)
+	@Transactional
+	public int removeHard(long id) {
+		// // DAO에게 삭제를 위임하고 영향 행 수를 반환한다
+		return fileDAO.deleteFile(id);
+	}
 
-        // 실제 저장 파일(폴더/UUID파일명)
-        File dest = new File(dir, uuidName);
+	// // PK 기준으로 논리 삭제한다(deleted=1 표시)
+	@Transactional
+	public int removeSoft(long id) {
+		// // DAO에게 업데이트를 위임하고 영향 행 수를 반환한다
+		return fileDAO.softDeleteFile(id);
+	}
 
-        // 디스크에 저장
-        mf.transferTo(dest);
+	// // 다운로드 성공 시 카운터를 1 증가시킨다
+	@Transactional
+	public int increaseDownloadCount(long id) {
+		// // DAO에게 카운트 증가를 위임하고 영향 행 수를 반환한다
+		return fileDAO.increaseDownloadCount(id);
+	}
 
-        // MIME 타입 보정
-        String contentType = mf.getContentType();
-        if (contentType == null || contentType.isBlank()) contentType = "application/octet-stream";
-
-        // DB에는 상대경로로 저장(예: "notice/uuid.png")
-        String savedRelative = normalizePathForDb(subDir, uuidName);
-
-        // 메타데이터 구성
-        FileVO vo = new FileVO();
-        vo.setOriginName(originName);
-        vo.setSavedName(savedRelative);
-        vo.setFileSize(mf.getSize());
-        vo.setContentType(contentType);
-
-        // DB INSERT
-        fileDAO.insertFile(vo);
-    }
-
-    // 파일 목록 조회: 매퍼 XML의 selectFileList 실행
-    public List<FileVO> getFileList() {
-        // DB에서 전체 목록을 가져와 컨트롤러로 반환
-        return fileDAO.selectFileList();
-    }
-
-    // 파일 단건 조회: 매퍼 XML의 selectFile 실행
-    public FileVO getFile(Long id) {
-        // id로 단건을 조회하여 컨트롤러로 반환
-        return fileDAO.selectFile(id);
-    }
-
-    // 파일 삭제(물리 삭제): 매퍼 XML에 <delete id="deleteFile"> 가 있어야 동작
-    public int deleteFile(Long id) {
-        // 삭제 실행 후 영향 행 수 반환
-        return fileDAO.deleteFile(id);
-    }
-
-    // 내부 유틸: 게시판 타입 문자열을 하위 폴더명으로 매핑
-    private String resolveSubDir(String boardType) {
-        // null 방어: 지정이 없으면 루트에 저장
-        if (boardType == null) return "";
-        // 소문자 비교로 안전하게 분기
-        String t = boardType.toLowerCase();
-        if (t.equals("notice")) return noticeSubDir;
-        if (t.equals("qna"))    return qnaSubDir;
-        if (t.equals("member")) return memberSubDir;
-        // 알 수 없는 타입이면 루트 사용
-        return "";
-    }
-
-    // 내부 유틸: DB에는 경로 구분자를 슬래시로 통일하여 저장
-    private String normalizePathForDb(String subDir, String fileName) {
-        // 하위 폴더 + 파일명 결합(널 방어)
-        String path = (subDir == null ? "" : subDir) + fileName;
-        // 윈도우 역슬래시를 슬래시로 통일
-        return path.replace('\\', '/');
-    }
+	// // 파일명에서 확장자를 소문자로 추출하는 유틸리티 메서드
+	// // 파일명에 점이 없거나 마지막이 점이면 bin 을 반환한다
+	private String extractExtLower(String filename) {
+		// // 파일명이 널 또는 빈 문자열이면 bin 을 반환한다
+		if (filename == null || filename.isEmpty())
+			return "bin";
+		// // 마지막 점 위치를 찾는다
+		int dot = filename.lastIndexOf('.');
+		// // 점이 없거나 끝이 점이면 bin 을 반환한다
+		if (dot < 0 || dot == filename.length() - 1)
+			return "bin";
+		// // 점 다음부터 끝까지를 잘라 소문자로 반환한다
+		return filename.substring(dot + 1).toLowerCase(Locale.ROOT);
+	}
 }

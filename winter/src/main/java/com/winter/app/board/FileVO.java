@@ -1,42 +1,48 @@
-// 패키지 선언: 이 클래스가 속한 네임스페이스(프로젝트 구조 상 board 도메인)
+// FileVO.java
+// // 목적: upload_file 테이블의 한 행을 표현하는 값 객체(VO)
+// // 매핑: resultMap(FileMap)에서 DB 컬럼(column) → VO 필드(property)로 주입됨
 package com.winter.app.board;
 
-// import: DB의 DATETIME을 자바 시간 타입으로 받기 위한 클래스(LocalDateTime 권장)
-import java.time.LocalDateTime;
-// import: 만약 LocalDateTime 매핑이 환경상 안 될 경우 임시로 사용할 수 있는 대안 타입(Timestamp)
-// import java.sql.Timestamp;
-
-// Lombok: 게터/세터/디버깅용 toString 자동 생성으로 보일러플레이트 제거
+// // 롬복이 getter/setter를 생성함(Annotation Processing 활성화 필요)
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
+// // 날짜/시간 컬럼 매핑을 위해 사용
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@ToString
-// VO 클래스: upload_file 테이블의 한 행(row)을 담는 값 객체
 public class FileVO {
 
-    // PK 컬럼 매핑: upload_file.id
+    // // PK 컬럼 매핑: upload_file.file_id → id
     private Long id;
 
-    // 원본 파일명 컬럼 매핑: upload_file.origin_name
+    // // 원본 파일명 컬럼 매핑: upload_file.origin_name → originName
     private String originName;
 
-    // 서버 저장 파일명(또는 하위 폴더 포함 상대경로) 매핑: upload_file.saved_name
-    // 예) "notice/uuid.png" 또는 "uuid.png"
+    // // 서버 저장 파일명 컬럼 매핑: upload_file.save_name → savedName
     private String savedName;
 
-    // 파일 크기(바이트) 컬럼 매핑: upload_file.file_size
-    private Long fileSize;
-
-    // MIME 타입 컬럼 매핑: upload_file.content_type
-    // 예) "image/png", "application/pdf"
+    // // MIME 타입 컬럼 매핑: upload_file.content_type → contentType
     private String contentType;
 
-    // 등록 일시 컬럼 매핑: upload_file.reg_date
-    // 기본은 LocalDateTime 사용을 권장(스프링+마이바티스에서 타입 핸들러가 지원됨)
-    // 만약 환경에 따라 매핑 이슈가 있다면 java.sql.Timestamp로 임시 전환 가능
+    // // 파일 크기(바이트) 컬럼 매핑: upload_file.file_size → fileSize
+    private Long fileSize;
+
+    // // 파일 확장자 컬럼 매핑: upload_file.file_ext → fileExt
+    private String fileExt;
+
+    // // 서버 저장 경로(상대경로 권장) 컬럼 매핑: upload_file.file_path → filePath
+    private String filePath;
+
+    // // 다운로드 횟수 컬럼 매핑: upload_file.download_count → downloadCount
+    private Integer downloadCount;
+
+    // // 삭제 여부(0:정상,1:삭제) 컬럼 매핑: upload_file.deleted → deleted
+    private Integer deleted;
+
+    // // 등록일 컬럼 매핑: upload_file.reg_date → regDate
     private LocalDateTime regDate;
-    // private Timestamp regDate; // 필요 시 대체 사용
+
+    // // 수정일 컬럼 매핑: upload_file.mod_date → modDate
+    private LocalDateTime modDate;
 }
