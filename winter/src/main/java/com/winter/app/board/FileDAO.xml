@@ -6,27 +6,16 @@
 
 	<!-- upload_file 테이블을 FileVO 로 매핑하는 resultMap 을 정의한다 -->
 	<resultMap id="FileMap" type="com.winter.app.board.FileVO">
-		<!-- PK file_id 를 VO.id 로 매핑한다 -->
 		<id property="id" column="file_id" />
-		<!-- 원본 파일명 origin_name 을 VO.originName 으로 매핑한다 -->
 		<result property="originName" column="origin_name" />
-		<!-- 저장 파일명 save_name 을 VO.savedName 으로 매핑한다 -->
 		<result property="savedName" column="save_name" />
-		<!-- MIME 타입 content_type 을 VO.contentType 으로 매핑한다 -->
 		<result property="contentType" column="content_type" />
-		<!-- 파일 크기 file_size 를 VO.fileSize 로 매핑한다 -->
 		<result property="fileSize" column="file_size" />
-		<!-- 확장자 file_ext 를 VO.fileExt 로 매핑한다 -->
 		<result property="fileExt" column="file_ext" />
-		<!-- 저장 경로 file_path 를 VO.filePath 로 매핑한다 -->
 		<result property="filePath" column="file_path" />
-		<!-- 다운로드 횟수 download_count 를 VO.downloadCount 로 매핑한다 -->
 		<result property="downloadCount" column="download_count" />
-		<!-- 삭제 여부 deleted 를 VO.deleted 로 매핑한다 -->
 		<result property="deleted" column="deleted" />
-		<!-- 등록일 reg_date 를 VO.regDate 로 매핑한다 -->
 		<result property="regDate" column="reg_date" />
-		<!-- 수정일 mod_date 를 VO.modDate 로 매핑한다 -->
 		<result property="modDate" column="mod_date" />
 	</resultMap>
 
